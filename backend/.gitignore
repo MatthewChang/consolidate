@@ -1,0 +1,5 @@
+.stack-work/
+Spock-rest.cabal
+*~
+static/static/bundle.js
+*.db

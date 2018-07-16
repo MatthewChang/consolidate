@@ -1,0 +1,31 @@
+body {
+  font-family: 'Source Sans Pro', 'Trebuchet MS', 'Lucida Grande', 'Bitstream Vera Sans', 'Helvetica Neue', sans-serif;
+  color: #293c4b;
+}
+
+h1 {
+  font-size: 30px;
+}
+
+img {
+  margin: 20px 0;
+  max-width: 200px;
+}
+
+.songSummaryRow {
+  h2 {
+    color: #4b3c99;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  div {
+    display: flex;
+    color: black;
+
+    h3 {
+      margin: 0;
+      margin-right: 10px;
+    }
+  }
+}

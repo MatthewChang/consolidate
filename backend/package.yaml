@@ -1,0 +1,53 @@
+name: flashcards
+version: 0.0.1
+synopsis: Backend for flashcard app
+description: See README at <https://github.com/matthewchang/>
+maintainer: Matthew Chang <mjchang07@gmail.com>
+license: MIT
+github: matthewchang/flashcards
+category: Development
+extra-source-files:
+  - README.md
+
+ghc-options: -Wall
+
+dependencies:
+  - base >= 4.9 && < 5
+  - aeson
+  - aeson-extra >= 0.4.1.0
+  - Spock
+  - text
+  - monad-logger
+  - wai-middleware-static
+  - bytestring
+  - http-types
+  - postgresql-simple
+  - resource-pool
+  - safe
+  - casing
+  - string-conversions
+  - regex-compat
+
+
+library:
+  source-dirs: src
+  exposed-modules:
+    - Union
+    - Lib
+
+executable:
+  main: Main.hs
+  source-dirs: app
+  dependencies:
+    - music-server-backend
+
+tests:
+  spec:
+    main: Spec.hs
+    source-dirs:
+      - test
+    dependencies:
+      - hspec
+      - hspec-discover
+      - should-not-typecheck
+      - flashcards
