@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fdefer-type-errors #-} -- To test type checking
+{-# OPTIONS_GHC -Wno-deferred-type-errors #-}
 {-# LANGUAGE TypeOperators        #-}
 {-# LANGUAGE ScopedTypeVariables             #-}
 
@@ -6,7 +7,6 @@ module UnionSpec where
 
 import Test.Hspec
 import Union
-import UnionDummy
 import Test.ShouldNotTypecheck (shouldNotTypecheck)
 
 
@@ -50,17 +50,16 @@ spec = do
         `shouldBe` True
       {-this should not type check because string should fail tye typeclass for num-}
       {-correctly doesn't typecheck but I'm cant put it in the tests-}
-      {-shouldNotTypecheck-}
-        {-$          testFunction [set "test", set (5 :: Int), set "another"]-}
-        {-==         (([], [6]) :: ([Int], [String]))-}
-        {-`shouldBe` True-}
+      shouldNotTypecheck
+        $  testFunction [set "test", set (5 :: Int), set "another"]
+        == (([], [6]) :: ([Int], [String]))
       {-this should not type check because the inputs do not match the outputs-}
       shouldNotTypecheck
         $  testFunction [set "test", set 'a']
         == (([], []) :: ([Int], [String]))
 
-    it "Should typecheck with typeclasses" $ do
-      1 `shouldBe` 1
+    {-it "Should typecheck with typeclasses" $ do-}
+      {-1 `shouldBe` 1-}
     it "allows data retrieval" $ do
       get (Right 5 :: Either String Int) `shouldBe` Just (5 :: Int)
       get (Left "test" :: Either String Int)
@@ -73,30 +72,11 @@ spec = do
       get (set "test" :: String + Int + Char) `shouldBe` Just "test"
       get (set "test" :: Char + Float + String) `shouldBe` Just "test"
     it "should not allow assignment for unions not containing the type" $ do
-      shouldNotTypecheck (setInt 5 :: Either Char (Either String Float))
-      shouldNotTypecheck (setInt 5 :: Either Char String)
+      shouldNotTypecheck (set 5 :: Either Char (Either String Float))
+      shouldNotTypecheck (set 5 :: Either Char String)
     it "should allow redundant unions to typecheck" $ do
       set (5 :: Int) `shouldBe` (Right 5 :: Either Int Int)
 
     it "should not allow typecheck retrieval for unions not containing the type"
       $ do
           shouldNotTypecheck (get (Left "string" :: Either Int Char))
-
-  describe "Union Dummy Implementation" $ do
-    it "Creates based on arbitrary depty" $ do
-      (setInt 5 :: Either String Int) `shouldBe` Right 5
-      (setInt 5 :: Either Int String) `shouldBe` Left 5
-      (setInt 5 :: Either Char (Either Int String)) `shouldBe` Right (Left 5)
-    it "should not allow assignment for unions not containing the type" $ do
-      shouldNotTypecheck (setInt 5 :: Either Char (Either String Float))
-      shouldNotTypecheck (setInt 5 :: Either Char String)
-    it "allows data retrieval" $ do
-      getInt (Right 5 :: Either String Int) `shouldBe` Just 5
-      getInt (Left "test" :: Either String Int) `shouldBe` Nothing
-      getInt (Right (Left 10) :: Either Char (Either Int String))
-        `shouldBe` Just 10
-    it "should not allow typecheck retrieval for unions not containing the type"
-      $ do
-      {-this actually does fail to typecheck but the deferred errors doesn't pick it up-}
-          (getInt (Left "string" :: Either String Char)) `shouldBe` Nothing
-      {-shouldNotTypecheck (getInt (Left "string" :: Either String Char))-}

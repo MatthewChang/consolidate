@@ -1,12 +1,14 @@
-{-# LANGUAGE OverloadedStrings        #-}
+{-# LANGUAGE OverloadedStrings         #-}
 {-# LANGUAGE TypeOperators             #-}
 
-module AppSpec where
+module LibSpec where
 
 import Test.Hspec
 import Lib
+import TestTables
 import           Database.PostgreSQL.Simple.Types
 import           Database.PostgreSQL.Simple.ToField
+
 
 spec :: Spec
 spec = do
@@ -37,31 +39,25 @@ spec = do
       ValueList ["name"] `shouldBe` expected
 
   describe "toQuery" $ do
-    it "builds a constructed query from constraints" $ do
-      let expected = toQuery $ Equal (7 :: Int) (8 :: Int)
-      constructedQuery "? = ?" [7 :: Int, 8 :: Int] `shouldBe` expected
-      let expected2 = toQuery $ Less (7 :: Int) (8 :: Int)
-      constructedQuery "? < ?" [7 :: Int, 8 :: Int] `shouldBe` expected2
-      let expected3 = toQuery $ GreaterOrEqual (7 :: Int) (8 :: Int)
-      constructedQuery "? >= ?" [7 :: Int, 8 :: Int] `shouldBe` expected3
-
-    it "builds queries from combined expressions" $ do
-      let expected = toQuery $ And
-            (Equal ("test" :: String) ("test" :: String))
-            (Equal ("other" :: String) ("other2" :: String))
-      constructedQuery "? = ? and ? = ?"
-                       (["test", "test", "other", "other2"] :: [String])
-        `shouldBe` expected
-
     it "works with automatic lifting for unions" $ do
       let result =
             buildConstraintQuery ((5 :: Int) =. (8 :: Int)) :: ConstructedQuery
                 (Record Song :. Record SongTag :. Record Tag)
       constructedQuery "? = ?" (5 :: Int, 8 :: Int) `shouldBe` result
 
+      let result2 =
+            buildConstraintQuery ((5 :: Int) <. (8 :: Int)) :: ConstructedQuery
+                (Record Song :. Record SongTag :. Record Tag)
+      constructedQuery "? < ?" (5 :: Int, 8 :: Int) `shouldBe` result2
+
+      let result3 =
+            buildConstraintQuery ((8 :: Int) >=. (8 :: Int)) :: ConstructedQuery
+                (Record Song :. Record SongTag :. Record Tag)
+      constructedQuery "? >= ?" (8 :: Int, 8 :: Int) `shouldBe` result3
+
     it "works with columns" $ do
       let result =
-            buildConstraintQuery (SongsId =. (8 :: Int)) :: ConstructedQuery
+            buildConstraintQuery (songIdC =. (Key 8 :: Key Song)) :: ConstructedQuery
                 (Record Song :. Record SongTag :. Record Tag)
 
       constructedQuery
@@ -72,9 +68,10 @@ spec = do
         `shouldBe` result
 
     it "works with keys" $ do
-      let result =
-            buildConstraintQuery (SongsId =. (Key 10 :: Key Song)) :: ConstructedQuery
-                (Record Song :. Record SongTag :. Record Tag)
+      let
+        result =
+          buildConstraintQuery (songIdC =. (Key 10 :: Key Song)) :: ConstructedQuery
+              (Record Song :. Record SongTag :. Record Tag)
 
       constructedQuery
           "? = ?"
@@ -86,7 +83,7 @@ spec = do
     it "builds full query" $ do
       let
         result =
-          build (And (SongsId =. (8 :: Int)) (SongTagsSongId =. SongsId)) :: ConstructedQuery
+          build (And (songIdC =. (Key 8 :: Key Song)) (songTagSongIdC =. songIdC)) :: ConstructedQuery
               (Record Song :. Record SongTag :. Record Tag)
       result
         `shouldBe` (ConstructedQuery

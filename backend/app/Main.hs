@@ -18,6 +18,9 @@ import           Web.Spock                            hiding (head)
 import           Web.Spock.Config
 import           Data.Aeson                           hiding (json)
 import           Lib
+import           Tables
+import           GHC.Generics
+import           Data.Text (Text)
 
 type Api = SpockM Connection () () ()
 type ApiAction a = SpockAction Connection () () a
@@ -43,6 +46,12 @@ main = do
   spockCfg <- defaultSpockCfg () (PCPool pool) ()
   runSpock 8080 (spock spockCfg app)
 
+data CardInput = CardInput {
+    question :: Text,
+    answer :: Text,
+    categoryId :: Key Category
+} deriving (Show, Generic)
+
 
 app :: Api
 app = do
@@ -50,67 +59,62 @@ app = do
   get root $ do
     file "" "static/index.html"
 
-  get "tags" $ do
-    tags <- getAll
-    json (tags :: [Record Tag])
+  {-get "tags" $ do-}
+    {-tags <- getAll-}
+    {-json (tags :: [Record Tag])-}
 
-  get "songs" $ do
-    songs <- getAll
-    json (songs :: [Record Song])
+  {-get "songs" $ do-}
+    {-songs <- getAll-}
+    {-json (songs :: [Record Song])-}
 
-  post "tags" $ do
-    maybeTag <- jsonBody :: ApiAction (Maybe Tag)
-    case maybeTag of
-      Nothing  -> errorJson 422 "Failed to parse request body as Tag"
-      Just tag -> do
-        tagr <- insertRecord tag
-        json tagr
+  {-post "cards" $ do-}
+    {-card <- jsonBody :: ApiAction (Maybe Tag)-}
+    {-case maybeTag of-}
+      {-Nothing  -> errorJson 422 "Failed to parse request body as Tag"-}
+      {-Just tag -> do-}
+        {-tagr <- insertRecord tag-}
+        {-json tagr-}
 
-  post "songs" $ do
-    maybeSong <- jsonBody :: ApiAction (Maybe Song)
-    case maybeSong of
-      Nothing   -> errorJson 422 "Failed to parse request body as Song"
-      Just song -> do
-        sr <- insertRecord song
-        json sr
+  {-post "songs" $ do-}
+    {-maybeSong <- jsonBody :: ApiAction (Maybe Song)-}
+    {-case maybeSong of-}
+      {-Nothing   -> errorJson 422 "Failed to parse request body as Song"-}
+      {-Just song -> do-}
+        {-sr <- insertRecord song-}
+        {-json sr-}
 
-  post "songTags" $ do
-    maybeSong <- jsonBody :: ApiAction (Maybe SongTag)
-    case maybeSong of
-      Nothing -> errorJson 422 "Failed to parse request body as SongTag"
-      Just st -> do
-        record <- insertRecord st
-        json record
+  {-post "songTags" $ do-}
+    {-maybeSong <- jsonBody :: ApiAction (Maybe SongTag)-}
+    {-case maybeSong of-}
+      {-Nothing -> errorJson 422 "Failed to parse request body as SongTag"-}
+      {-Just st -> do-}
+        {-record <- insertRecord st-}
+        {-json record-}
 
-  Web.Spock.delete ("songs" <//> var) $ \songId -> do
-    deleted <- deleteRecord $ (Key songId :: Key Song)
-    json deleted
+  {-Web.Spock.delete ("songs" <//> var) $ \songId -> do-}
+    {-deleted <- deleteRecord $ (Key songId :: Key Song)-}
+    {-json deleted-}
 
-  get ("home") $ do
-    songs    <- getAll
-    tags     <- getAll
-    songTags <- getAll
-    json $ object
-      [ "tags" .= (tags :: [Record Tag])
-      , "songs" .= (songs :: [Record Song])
-      , "songTags" .= (songTags :: [Record SongTag])
-      ]
+  {-get ("home") $ do-}
+    {-songs    <- getAll-}
+    {-tags     <- getAll-}
+    {-songTags <- getAll-}
+    {-json $ object-}
+      {-[ "tags" .= (tags :: [Record Tag])-}
+      {-, "songs" .= (songs :: [Record Song])-}
+      {-, "songTags" .= (songTags :: [Record SongTag])-}
+      {-]-}
 
-  get ("tags" <//> var) $ \tagId -> do
-    tag    <- find404 $ (Key tagId :: Key Tag)
-    result <- executeQuery $ build $ And (SongTagsTagId =. tagId)
-                                         (SongsId =. SongTagsSongId)
-    (songs, songTags, tags) <- pure
-      $ split3 (result :: [(Record Song) :. (Record SongTag) :. (Record Tag)])
+  {-get ("tags" <//> var) $ \tagId -> do-}
+    {-tag    <- find404 $ (Key tagId :: Key Tag)-}
+    {-result <- executeQuery $ build $ And (SongTagsTagId =. tagId)-}
+                                         {-(SongsId =. SongTagsSongId)-}
+    {-(songs, songTags, tags) <- pure-}
+      {-$ split3 (result :: [(Record Song) :. (Record SongTag) :. (Record Tag)])-}
 
-    json $ object
-      [ "tags" .= (tags :: [Record Tag])
-      , "songTags" .= (songTags :: [Record SongTag])
-      , "songs" .= (songs :: [Record Song])
-      ]
-
-  {-get ("songs" <//> var) $ \id -> do-}
-    {-song <- getRecord404 $ SongKey id-}
-    {-tags <- manyThrough (entityKey song) SongTagSongId SongTagTagId TagId-}
-    {-json $ object ["song" .= song, "tags" .= tags]-}
+    {-json $ object-}
+      {-[ "tags" .= (tags :: [Record Tag])-}
+      {-, "songTags" .= (songTags :: [Record SongTag])-}
+      {-, "songs" .= (songs :: [Record Song])-}
+      {-]-}
 

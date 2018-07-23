@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE DeriveGeneric            #-}
 {-# LANGUAGE DisambiguateRecordFields #-}
 {-# LANGUAGE DuplicateRecordFields    #-}
@@ -5,8 +6,10 @@
 {-# LANGUAGE FlexibleInstances        #-}
 {-# LANGUAGE OverloadedStrings        #-}
 {-# LANGUAGE TypeFamilies             #-}
-{-# LANGUAGE TypeOperators             #-}
-{-# LANGUAGE ScopedTypeVariables             #-}
+{-# LANGUAGE TypeOperators            #-}
+{-# LANGUAGE ScopedTypeVariables      #-}
+{-# LANGUAGE ConstraintKinds #-}
+
 
 module Lib where
 
@@ -17,14 +20,13 @@ import           Data.Int                             (Int64)
 import           Data.List
 import           Data.Semigroup
 import           Data.String (fromString)
-import           Data.Text (Text,toLower)
+import           Data.Text (Text)
 import           Database.PostgreSQL.Simple
 import           Database.PostgreSQL.Simple.FromField hiding (name)
 import           Database.PostgreSQL.Simple.FromRow
 import           Database.PostgreSQL.Simple.ToField
 import           Database.PostgreSQL.Simple.ToRow
 import Database.PostgreSQL.Simple.Types
-import Text.Casing hiding (Identifier)
 import           GHC.Generics
 import           Network.HTTP.Types.Status
 import           Safe
@@ -33,8 +35,6 @@ import Text.Regex
 import Union
 import Data.String.Conversions hiding ((<>))
 
-
-{-todo use Text to build QualifiedIdentifier and Identifier types to use the existing library substitution-}
 newtype TableName a = TableName {unTableName :: Identifier}
 newtype ValueList a = ValueList {fromValueList :: [Text]} deriving (Show,Eq)
 instance ToRow ( ValueList a ) where
@@ -44,27 +44,27 @@ instance ToField (TableName a) where
   toField = toField . unTableName
 
 removeTableName :: String -> String -> String
-removeTableName tn cn =
-  subRegex (mkRegexWithOpts ("^" ++ tn) True False) cn ""
+removeTableName tn cn = subRegex (mkRegexWithOpts ("^" ++ tn) True False) cn ""
 
-class (Show (ColumnType a), Enum (ColumnType a), Eq (ColumnType a), ToRow a, FromRow a) => Table a where
+data Column t ty = Column {fromColumn :: Text} deriving (Show)
+instance (Table t) => ToField (Column t a) where
+  toField a = let tn = fromIdentifier $ unTableName (tableName :: TableName t)
+              in toField $ QualifiedIdentifier (Just tn) (fromColumn a)
+data CheckedColumn t = CheckedColumn {toAction :: Action}
+instance ToField (CheckedColumn a) where
+  toField = toAction
+(<:) :: ValueList a -> Column a ty -> ValueList a
+ValueList l <: c = ValueList $ l ++ [fromColumn c]
+(<!) :: Column a b -> Column a c -> ValueList a
+a <! b = ValueList $ [fromColumn a, fromColumn b]
+
+class (ToRow a, FromRow a) => Table a where
   tableName :: TableName a
-  data ColumnType a :: *
-  {-columnName :: ColumnType a -> String-}
   valueList :: ValueList a
-  valueList = colsToValueList [toEnum 0 ..] 
-
   insertValueList :: ValueList a
-  insertValueList = colsToValueList (filter (\x->x /= primaryKey) [toEnum 0 ..])
-
-  colsToValueList :: [ColumnType a] -> ValueList a
-  colsToValueList a = ValueList $ (columnName) <$> a
-
-  columnName :: ColumnType a -> Text
-  columnName = toLower . cs . (removeTableName $ cs (fromIdentifier $ unTableName (tableName :: TableName a))) . show
-
-  primaryKey :: ColumnType a
-  primaryKey = toEnum 0
+  insertValueList = ValueList list' where
+    (ValueList list) = valueList :: ValueList a
+    list' = tail list
 
 newtype Key a = Key {unKey :: Int64} deriving (Generic,Show)
 instance FromField (Key a) where
@@ -82,102 +82,95 @@ instance (ToJSON a) => ToJSON (Record a) where
 instance (FromRow a) => FromRow (Record a) where
   fromRow = Record <$> field <*> fromRow
 
-data Tag = Tag {name :: String} deriving (Show, Generic)
-{-tagName t = name (t :: Tag)-}
-instance ToJSON Tag
-instance FromJSON Tag
-instance FromRow Tag where
-  fromRow = Tag <$> field
-instance ToRow Tag where
-  toRow t = [toField . (name :: Tag -> String)] <*> [t]
-instance Table Tag where
-  tableName = TableName $ Identifier "tags"
-  data ColumnType Tag = TagsId | TagsName deriving (Enum,Show,Eq)
-  valueList = ValueList ["name"]
+type family ConstraintType a where
+  ConstraintType (Column tb ty) = ty
+  ConstraintType a = a
 
-data Song = Song {name :: String} deriving (Show, Generic)
-{-songName s = name (s :: Song)-}
-instance ToJSON Song
-instance FromJSON Song
-instance FromRow Song where
-  fromRow = Song <$> field
-instance ToRow Song where
-  toRow t = [toField . (name :: Song -> String)] <*> [t]
-instance Table Song where
-  tableName = TableName $ Identifier "songs"
-  data ColumnType Song = SongsId | SongsName deriving (Enum,Show,Eq)
+type family ConstraintTable a where
+  ConstraintTable (Column tb ty) = tb
+  ConstraintTable a = a
 
-data SongTag = SongTag {songId :: Key Song, tagId :: Key Tag} deriving (Show, Generic)
-instance ToJSON SongTag
-instance FromJSON SongTag
-instance FromRow SongTag
-instance ToRow SongTag where
-  toRow t = [toField . songId, toField . tagId] <*> [t]
-instance Table SongTag where
-  tableName = TableName $ Identifier "songtags"
-  data ColumnType SongTag = SongTagsId | SongTagsSongId | SongTagsTagId deriving (Enum,Show,Eq)
+{-function for the constraint to use for the given types-}
+{-for columns we check that they are in the give tables-}
+{-anthing else just has to have to field defined-}
+{-this allows us to use new types without needing -}
+type family ConstraintFor a u where
+  ConstraintFor (Column tb ty) u = Setable tb u
+  ConstraintFor a _ = ToField a
 
-instance (Table a) => ToField (ColumnType a) where
-  toField a = let tn = fromIdentifier $ unTableName (tableName :: TableName a)
-              in toField $ QualifiedIdentifier (Just tn) (columnName a)
-instance (ToField a, ToField b) => ToField (Either a b) where
-  toField (Left a) = toField a
-  toField (Right a) = toField a
+data Constraint a = Equal Action Action | Less Action Action | GreaterOrEqual Action Action | And (Constraint a) (Constraint a)
 
-{-class (Table a, Table b) => Association a b where-}
-  {-columns :: (ColumnType a, ColumnType b)-}
+(=.)
+  :: ( ConstraintType a ~ ConstraintType b
+     , ConstraintFor a u
+     , ConstraintFor b u
+     , ToField a
+     , ToField b
+     )
+  => a
+  -> b
+  -> Constraint u
+a =. b = Equal (toField a) (toField b)
 
-{-instance Association SongTag Song where-}
-  {-columns = (SongTagsSongId, SongsId)-}
 
-{-joinMany :: (Table a,Table b) => Key a -> ColumType b -> ConstructedQuery [Record b]-}
-{-joinMany key col =  joinQuery tableName key (columName col)-}
+(<.)
+  :: ( ConstraintType a ~ ConstraintType b
+     , ConstraintFor a u
+     , ConstraintFor b u
+     , ToField a
+     , ToField b
+     )
+  => a
+  -> b
+  -> Constraint u
+a <. b = Less (toField a) (toField b)
 
-{-joinQuery :: (Table a, Table b) => TableName b -> Key a -> ColumnName b-}
-{-joinQuery (TableName name) key colname = ConstructedQuery ""-}
-
-data Constraint a = Equal a a | Less a a | GreaterOrEqual a a | And (Constraint a) (Constraint a)
-
-(=.) :: (Setable a u, Setable b u) => a -> b -> Constraint u
-a =. b = Equal (set a) (set b)
-
-(<.) :: (Setable a u, Setable b u) => a -> b -> Constraint u
-a <. b = Less (set a) (set b)
-
-(>=.) :: (Setable a u, Setable b u) => a -> b -> Constraint u
-a >=. b = GreaterOrEqual (set a) (set b)
+(>=.)
+  :: ( ConstraintType a ~ ConstraintType b
+     , ConstraintFor a u
+     , ConstraintFor b u
+     , ToField a
+     , ToField b
+     )
+  => a
+  -> b
+  -> Constraint u
+a >=. b = GreaterOrEqual (toField a) (toField b)
 
 class ToQuery a where
   toQuery :: a -> ConstructedQuery b
-instance (ToField a) => ToQuery (Constraint a) where
+instance ToQuery (Constraint a) where
   toQuery (Equal a b) = constructedQuery ("? = ?") (a,b)
   toQuery (Less a b) = constructedQuery ("? < ?") (a,b)
   toQuery (GreaterOrEqual a b) = constructedQuery ("? >= ?") (a,b)
   toQuery (And a b) = (toQuery a) <> (ConstructedQuery " and " []) <> (toQuery b)
 
 queryHeader
-  :: (TableName a, TableName b, TableName c) -> ConstructedQuery (Record a :. Record b :. Record c)
+  :: (TableName a, TableName b, TableName c)
+  -> ConstructedQuery (Record a :. Record b :. Record c)
 queryHeader (a, b, c) =
   ConstructedQuery "select * from ?, ?, ?" $ [toField a, toField b, toField c]
 
-type ExtraTypes = Int + Key Song + Key Tag + Key SongTag
 
 buildConstraintQuery
   :: (Table a, Table b, Table c)
-  => Constraint
-       ((ColumnType a) + (ColumnType b) + (ColumnType c) + ExtraTypes)
+  => Constraint (a + b + c)
   -> ConstructedQuery (Record a :. Record b :. Record c)
 buildConstraintQuery = toQuery
 
 build
   :: (Table a, Table b, Table c)
-  => Constraint
-       ((ColumnType a) + (ColumnType b) + (ColumnType c) + ExtraTypes)
+  => Constraint (a + b + c)
   -> ConstructedQuery (Record a :. Record b :. Record c)
 build constraints =
-  queryHeader (tableName, tableName, tableName) <> ConstructedQuery " where " [] <>(toQuery constraints)
+  queryHeader (tableName, tableName, tableName)
+    <> ConstructedQuery " where " []
+    <> (toQuery constraints)
 
-executeQuery :: (FromRow a, HasSpock m, SpockConn m ~ Connection) => ConstructedQuery a -> m [a]
+executeQuery
+  :: (FromRow a, HasSpock m, SpockConn m ~ Connection)
+  => ConstructedQuery a
+  -> m [a]
 executeQuery q = runQuery $ \conn -> query conn qs qv
   where ConstructedQuery qs qv = q
 
@@ -219,9 +212,7 @@ getFromTable (TableName n) conn = query conn "select * from ?;" (Only n)
 
 {-Generic insert logic-}
 insertRecord
-  :: (Table a, HasSpock m, SpockConn m ~ Connection)
-  => a
-  -> m (Record a)
+  :: (Table a, HasSpock m, SpockConn m ~ Connection) => a -> m (Record a)
 insertRecord = runQuery . insertElement
 
 insertElement
@@ -241,7 +232,8 @@ instance Eq (ConstructedQuery a) where
 insertQuery
   :: (Table a) => TableName a -> ValueList a -> a -> ConstructedQuery a
 insertQuery (TableName n) values a =
-  let paramString = intercalate "," $ replicate (length $ fromValueList values) "?"
+  let paramString =
+        intercalate "," $ replicate (length $ fromValueList values) "?"
   in  ConstructedQuery
         (  fromString
         $  "insert into ? ("
@@ -270,16 +262,6 @@ deleteQuery (TableName n) k =
 
 executeDeleteQuery :: ConstructedQuery a -> Connection -> IO (Int64)
 executeDeleteQuery (ConstructedQuery q vars) conn = execute conn q vars
-
-{-addTag' :: Tag -> Connection -> IO (Record Tag)-}
-{-addTag' t conn = head <$> query conn "insert into tags (name) values (?) returning *" t-}
-
-{-{-This relies on type inference to work so it won't compile unless used in the spock monad-}-}
-{-addTag = runQuery . addTag'-}
-
-{-getTags' :: Connection -> IO ([Record Tag])-}
-{-getTags' conn = query_ conn "select * from tags;"-}
-{-getTags = runQuery getTags'-}
 
 guardNotFound :: MonadIO m => Maybe (Record a) -> ActionCtxT ctx m (Record a)
 guardNotFound Nothing = do

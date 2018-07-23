@@ -1,19 +1,17 @@
 DROP SCHEMA public CASCADE;
 CREATE SCHEMA public;
 
-CREATE TABLE songs (
+CREATE TABLE cards (
     id SERIAL PRIMARY KEY,
-    name varchar(255)
+    question varchar(255),
+    answer varchar(255),
+    last_correct_at timestamp,
+    wait_duration interval,
+    category_id int REFERENCES categories ON DELETE RESTRICT,
 );
+CREATE INDEX cardscategories ON cards category_id;
 
-CREATE TABLE tags (
+CREATE TABLE categories (
     id SERIAL PRIMARY KEY ,
     name varchar(255)
 );
-
-CREATE TABLE songTags (
-    id SERIAL PRIMARY KEY,
-    songId int REFERENCES songs ON DELETE CASCADE,
-    tagId int REFERENCES tags ON DELETE CASCADE
-);
-CREATE UNIQUE INDEX songTagsIds ON songTags (songId,tagId);

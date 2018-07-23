@@ -27,6 +27,11 @@ dependencies:
   - casing
   - string-conversions
   - regex-compat
+  - servant
+  - time
+  - blaze-markup
+  - blaze-html
+  - directory
 
 
 library:
@@ -39,7 +44,7 @@ executable:
   main: Main.hs
   source-dirs: app
   dependencies:
-    - music-server-backend
+    - flashcards
 
 tests:
   spec:
