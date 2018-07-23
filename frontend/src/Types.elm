@@ -4,39 +4,20 @@ import UrlParser as Url exposing ((</>))
 import Http
 import Navigation
 import Bootstrap.Dropdown as Dropdown
+import Time
 
 
 type Msg
     = UrlChange Navigation.Location
     | InitializeFetch
     | NavigateTo Route
-    | AddTag
-    | SubmitNewSong
-    | OpenNewSongModal
-    | CloseNewSongModal
-    | OpenAddTagModal
-    | CloseAddTagModal
-    | SetAddTagDropdownState Dropdown.State
-    | SelectTag SelectTagOption
     | SetInput InputField String
-    | DeleteSong (Record Song)
-    | DeleteSongRequest (Result Http.Error (Id Song))
-    | FetchHomePage (Result Http.Error HomePageResponse)
-    | FetchTag (Result Http.Error (Record Song))
-    | FetchTags (Result Http.Error (List (Record Tag)))
-    | FetchSongs (Result Http.Error (List (Record Song)))
-    | FetchSong (Result Http.Error (Record Song))
-    | PostTag (Result Http.Error (Record Tag))
-    | PostSong (Result Http.Error (Record Song))
-
+    | FetchHomePage (Result Http.Error Int)
 
 type InputField
     = NewTag
     | NewSong
 
-
-type alias HomePageResponse =
-    { songs : List (Record Song), tags : List (Record Tag), songTags : List (JoinEntry Song Tag) }
 
 
 type Id a
@@ -56,41 +37,35 @@ type alias Record a =
     { id : Id a, value : a }
 
 
-type alias Tag =
-    { name : String }
+type alias Card =
+    { question : String
+    , answer : String
+    , lastCorrectAt : Float
+    , waitDuration : Float
+    , categoryId : Id Category
+    }
 
 
-type alias Song =
+type alias Category =
     { name : String }
 
 
 
 --frontend stuff
 
-
-type SelectTagOption
-    = SelectedTag (Record Tag)
-    | Other
-    | None
-
-
-
 --routes stuff
 
 
 type Route
     = RootPage
-    | TagPage Int
-    | SongPage Int
-    | SongsPage
+    | ViewAll
 
 
 routeParser : Url.Parser (Route -> a) a
 routeParser =
     Url.oneOf
         [ Url.map RootPage Url.top
-        , Url.map TagPage (Url.s "tags" </> Url.int)
-        , Url.map SongPage (Url.s "songs" </> Url.int)
+        , Url.map ViewAll (Url.s "all")
         ]
 
 
@@ -100,14 +75,9 @@ routeToString r =
         RootPage ->
             "/"
 
-        TagPage a ->
-            "tags/" ++ toString a
+        ViewAll  ->
+            "all/"
 
-        SongPage a ->
-            "songs/" ++ toString a
-
-        SongsPage ->
-            "songs"
 
 
 navigateTo : Route -> Cmd msg

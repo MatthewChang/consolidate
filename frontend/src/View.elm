@@ -3,8 +3,6 @@ module View exposing (..)
 import Html exposing (Html, text, div, h1, img, input, button)
 import Model exposing (..)
 import Types exposing (..)
-import Views.TagPage exposing (..)
-import Views.SongPage exposing (..)
 import Views.HomePage exposing (..)
 
 
@@ -17,14 +15,7 @@ view model =
 
             Just RootPage ->
                 homePage model
-
-            Just (TagPage a) ->
-                tagPage model (Id a)
-
-            Just (SongPage a) ->
-                songPage model
-
-            Just SongsPage ->
+            _ ->
                 homePage model
     else
         text "Loading..."

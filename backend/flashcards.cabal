@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: ddf56cf088f99dbdaed46a75da9bc56423b58b62a6fc6c103c6aa0480403242f
+-- hash: fc89e68ab6310f00598802c61ae01d827d3a38d44dca015c256c75d88602307e
 
 name:           flashcards
 version:        0.0.1
@@ -36,30 +36,39 @@ library
   build-depends:
       Spock
     , aeson
+    , aeson-compat
     , aeson-extra >=0.4.1.0
+    , attoparsec
     , base >=4.9 && <5
+    , base-compat
     , blaze-html
     , blaze-markup
     , bytestring
     , casing
     , directory
+    , http-media
     , http-types
+    , lucid
     , monad-logger
+    , mtl
     , postgresql-simple
     , regex-compat
     , resource-pool
     , safe
     , servant
+    , servant-server
     , string-conversions
     , text
     , time
+    , wai
     , wai-middleware-static
+    , warp
   default-language: Haskell2010
 
 executable flashcards
-  main-is: ApiType.hs
+  main-is: Main.hs
   other-modules:
-      Main
+      ApiType
       Paths_flashcards
   hs-source-dirs:
       app
@@ -67,25 +76,34 @@ executable flashcards
   build-depends:
       Spock
     , aeson
+    , aeson-compat
     , aeson-extra >=0.4.1.0
+    , attoparsec
     , base >=4.9 && <5
+    , base-compat
     , blaze-html
     , blaze-markup
     , bytestring
     , casing
     , directory
     , flashcards
+    , http-media
     , http-types
+    , lucid
     , monad-logger
+    , mtl
     , postgresql-simple
     , regex-compat
     , resource-pool
     , safe
     , servant
+    , servant-server
     , string-conversions
     , text
     , time
+    , wai
     , wai-middleware-static
+    , warp
   default-language: Haskell2010
 
 test-suite spec
@@ -103,8 +121,11 @@ test-suite spec
   build-depends:
       Spock
     , aeson
+    , aeson-compat
     , aeson-extra >=0.4.1.0
+    , attoparsec
     , base >=4.9 && <5
+    , base-compat
     , blaze-html
     , blaze-markup
     , bytestring
@@ -113,16 +134,22 @@ test-suite spec
     , flashcards
     , hspec
     , hspec-discover
+    , http-media
     , http-types
+    , lucid
     , monad-logger
+    , mtl
     , postgresql-simple
     , regex-compat
     , resource-pool
     , safe
     , servant
+    , servant-server
     , should-not-typecheck
     , string-conversions
     , text
     , time
+    , wai
     , wai-middleware-static
+    , warp
   default-language: Haskell2010

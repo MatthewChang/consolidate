@@ -31,7 +31,7 @@ module.exports = {
     app: __dirname + '/src/index.js',
   },
   output: {
-    path: '/Users/matthewchang/music_server/music_server/backend/static/static', // `dist` is the destination
+    path: '/Users/matthewchang/flashcards/backend/static/static', // `dist` is the destination
     publicPath: "/assets/",
     filename: 'bundle.js',
   },

@@ -13,6 +13,7 @@ ghc-options: -Wall
 
 dependencies:
   - base >= 4.9 && < 5
+  - base-compat
   - aeson
   - aeson-extra >= 0.4.1.0
   - Spock
@@ -28,6 +29,14 @@ dependencies:
   - string-conversions
   - regex-compat
   - servant
+  - servant-server
+  - wai
+  - warp
+  - mtl
+  - aeson-compat
+  - attoparsec
+  - http-media
+  - lucid
   - time
   - blaze-markup
   - blaze-html

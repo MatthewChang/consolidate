@@ -46,8 +46,7 @@ data Position = Position
 
 instance ToJSON Position
 
-newtype HelloMessage = HelloMessage { msg :: String }
-  deriving Generic
+newtype HelloMessage = HelloMessage { msg :: String } deriving Generic
 
 instance ToJSON HelloMessage
 
@@ -69,15 +68,18 @@ data Email = Email
   } deriving Generic
 
 instance ToJSON Email
-
 emailForClient :: ClientInfo -> Email
 emailForClient c = Email from' to' subject' body'
-
-  where from'    = "great@company.com"
-        to'      = clientEmail c
-        subject' = "Hey " ++ clientName c ++ ", we miss you!"
-        body'    = "Hi " ++ clientName c ++ ",\n\n"
-                ++ "Since you've recently turned " ++ show (clientAge c)
-                ++ ", have you checked out our latest "
-                ++ intercalate ", " (clientInterestedIn c)
-                ++ " products? Give us a visit!"
+ where
+  from'    = "great@company.com"
+  to'      = clientEmail c
+  subject' = "Hey " ++ clientName c ++ ", we miss you!"
+  body' =
+    "Hi "
+      ++ clientName c
+      ++ ",\n\n"
+      ++ "Since you've recently turned "
+      ++ show (clientAge c)
+      ++ ", have you checked out our latest "
+      ++ intercalate ", " (clientInterestedIn c)
+      ++ " products? Give us a visit!"

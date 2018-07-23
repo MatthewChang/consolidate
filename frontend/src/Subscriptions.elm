@@ -6,6 +6,9 @@ import Bootstrap.Dropdown as Dropdown
 
 
 subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.batch
-        [ Dropdown.subscriptions model.showAddTagDropdown SetAddTagDropdownState ]
+subscriptions model = Sub.none
+
+--subscriptions : Model -> Sub Msg
+--subscriptions model =
+    --Sub.batch
+        --[ Dropdown.subscriptions model.showAddTagDropdown SetAddTagDropdownState ]
