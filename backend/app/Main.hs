@@ -1,120 +1,119 @@
-{-# LANGUAGE DeriveGeneric            #-}
-{-# LANGUAGE DisambiguateRecordFields #-}
-{-# LANGUAGE DuplicateRecordFields    #-}
-{-# LANGUAGE FlexibleContexts         #-}
-{-# LANGUAGE FlexibleInstances        #-}
-{-# LANGUAGE MultiParamTypeClasses    #-}
-{-# LANGUAGE OverloadedStrings        #-}
-{-# LANGUAGE RecordWildCards          #-}
-{-# LANGUAGE TypeFamilies             #-}
-{-# LANGUAGE TypeOperators             #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
 
-module Main where
+module ApiType where
 
-import           Data.Pool
-import           Database.PostgreSQL.Simple
-import           Network.Wai.Middleware.Static
-import           Web.Spock                            hiding (head)
-import           Web.Spock.Config
-import           Data.Aeson                           hiding (json)
-import           Lib
-import           Tables
-import           GHC.Generics
-import           Data.Text (Text)
+import Prelude ()
+import Prelude.Compat
 
-type Api = SpockM Connection () () ()
-type ApiAction a = SpockAction Connection () () a
+import Control.Monad.Except
+import Control.Monad.Reader
+import Data.Aeson.Compat
+import Data.Aeson.Types
+import Data.Attoparsec.ByteString
+import Data.ByteString.Lazy.Char8 (ByteString,pack)
+import Data.List
+import Data.Maybe
+import Data.String.Conversions
+import Data.Time.Calendar
+import GHC.Generics
+import Network.HTTP.Media ((//), (/:))
+import Network.Wai
+import Network.Wai.Handler.Warp
+import Servant
+import System.IO
+import Control.Monad
 
-errorJson :: Int -> String -> ApiAction ()
-errorJson code message = json $ object
-  [ "result" .= String "failure"
-  , "error" .= object ["code" .= code, "message" .= message]
-  ]
+data HTML
+instance Accept HTML where
+    contentType _ = "text" // "html" /: ("charset", "utf-8")
+instance MimeRender HTML String where
+    mimeRender _ = pack
 
-split3 :: [(a :. b :. c)] -> ([a], [b], [c])
-split3 []               = ([], [], [])
-split3 ((a :. b :. c) : xs) = (a : as, b : bs, c : cs)
-  where (as, bs, cs) = split3 xs
+type API = "position" :> Capture "x" Int :> Capture "y" Int :> Get '[JSON] Position
+      :<|> "hello" :> QueryParam "name" String :> Get '[JSON] HelloMessage
+      :<|> "marketing" :> ReqBody '[JSON] ClientInfo :> Post '[JSON] Email
+      :<|> Get '[HTML] String
+      :<|> "static" :> Raw
+
+data Position = Position
+  { xCoord :: Int
+  , yCoord :: Int
+  } deriving Generic
+
+instance ToJSON Position
+
+newtype HelloMessage = HelloMessage { msg :: String } deriving Generic
+
+instance ToJSON HelloMessage
+
+data ClientInfo = ClientInfo
+  { clientName :: String
+  , clientEmail :: String
+  , clientAge :: Int
+  , clientInterestedIn :: [String]
+  } deriving Generic
+
+instance FromJSON ClientInfo
+instance ToJSON ClientInfo
+
+data Email = Email
+  { from :: String
+  , to :: String
+  , subject :: String
+  , body :: String
+  } deriving Generic
+
+instance ToJSON Email
+emailForClient :: ClientInfo -> Email
+emailForClient c = Email from' to' subject' body'
+ where
+  from'    = "great@company.com"
+  to'      = clientEmail c
+  subject' = "Hey " ++ clientName c ++ ", we miss you!"
+  body' =
+    "Hi "
+      ++ clientName c
+      ++ ",\n\n"
+      ++ "Since you've recently turned "
+      ++ show (clientAge c)
+      ++ ", have you checked out our latest "
+      ++ intercalate ", " (clientInterestedIn c)
+      ++ " products? Give us a visit!"
+
+server3 :: Server API
+server3 = position :<|> hello :<|> marketing :<|> home :<|> serveDirectoryWebApp "static/static"
+ where
+  position :: Int -> Int -> Handler Position
+  position x y = return (Position x y)
+
+  hello :: Maybe String -> Handler HelloMessage
+  hello mname = return . HelloMessage $ case mname of
+    Nothing -> "Hello, anonymous coward"
+    Just n  -> "Hello, " ++ n
+
+  marketing :: ClientInfo -> Handler Email
+  marketing clientinfo = return (emailForClient clientinfo)
+
+  home = liftIO $ do
+    handle <- openFile "static/index.html" ReadMode
+    hGetContents handle
+
+userAPI :: Proxy API
+userAPI = Proxy
+
+-- 'serve' comes from servant and hands you a WAI Application,
+-- which you can think of as an "abstract" web application,
+-- not yet a webserver.
+app1 :: Application
+app1 = serve userAPI server3
 
 main :: IO ()
-main = do
-  pool <- createPool (connect (ConnectInfo "localhost" 5432 "" "" "music"))
-                     close
-                     1
-                     10
-                     10
-  spockCfg <- defaultSpockCfg () (PCPool pool) ()
-  runSpock 8080 (spock spockCfg app)
-
-data CardInput = CardInput {
-    question :: Text,
-    answer :: Text,
-    categoryId :: Key Category
-} deriving (Show, Generic)
-
-
-app :: Api
-app = do
-  middleware (staticPolicy (addBase "static"))
-  get root $ do
-    file "" "static/index.html"
-
-  {-get "tags" $ do-}
-    {-tags <- getAll-}
-    {-json (tags :: [Record Tag])-}
-
-  {-get "songs" $ do-}
-    {-songs <- getAll-}
-    {-json (songs :: [Record Song])-}
-
-  {-post "cards" $ do-}
-    {-card <- jsonBody :: ApiAction (Maybe Tag)-}
-    {-case maybeTag of-}
-      {-Nothing  -> errorJson 422 "Failed to parse request body as Tag"-}
-      {-Just tag -> do-}
-        {-tagr <- insertRecord tag-}
-        {-json tagr-}
-
-  {-post "songs" $ do-}
-    {-maybeSong <- jsonBody :: ApiAction (Maybe Song)-}
-    {-case maybeSong of-}
-      {-Nothing   -> errorJson 422 "Failed to parse request body as Song"-}
-      {-Just song -> do-}
-        {-sr <- insertRecord song-}
-        {-json sr-}
-
-  {-post "songTags" $ do-}
-    {-maybeSong <- jsonBody :: ApiAction (Maybe SongTag)-}
-    {-case maybeSong of-}
-      {-Nothing -> errorJson 422 "Failed to parse request body as SongTag"-}
-      {-Just st -> do-}
-        {-record <- insertRecord st-}
-        {-json record-}
-
-  {-Web.Spock.delete ("songs" <//> var) $ \songId -> do-}
-    {-deleted <- deleteRecord $ (Key songId :: Key Song)-}
-    {-json deleted-}
-
-  {-get ("home") $ do-}
-    {-songs    <- getAll-}
-    {-tags     <- getAll-}
-    {-songTags <- getAll-}
-    {-json $ object-}
-      {-[ "tags" .= (tags :: [Record Tag])-}
-      {-, "songs" .= (songs :: [Record Song])-}
-      {-, "songTags" .= (songTags :: [Record SongTag])-}
-      {-]-}
-
-  {-get ("tags" <//> var) $ \tagId -> do-}
-    {-tag    <- find404 $ (Key tagId :: Key Tag)-}
-    {-result <- executeQuery $ build $ And (SongTagsTagId =. tagId)-}
-                                         {-(SongsId =. SongTagsSongId)-}
-    {-(songs, songTags, tags) <- pure-}
-      {-$ split3 (result :: [(Record Song) :. (Record SongTag) :. (Record Tag)])-}
-
-    {-json $ object-}
-      {-[ "tags" .= (tags :: [Record Tag])-}
-      {-, "songTags" .= (songTags :: [Record SongTag])-}
-      {-, "songs" .= (songs :: [Record Song])-}
-      {-]-}
-
+main = run 8080 app1

@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: fc89e68ab6310f00598802c61ae01d827d3a38d44dca015c256c75d88602307e
+-- hash: 1fead2cc56b32768de786712302e208237e6fb9fa9eb0dff9fcdc37c96b7057a
 
 name:           flashcards
 version:        0.0.1
@@ -68,7 +68,7 @@ library
 executable flashcards
   main-is: Main.hs
   other-modules:
-      ApiType
+      OldMain
       Paths_flashcards
   hs-source-dirs:
       app
