@@ -12,6 +12,7 @@ type Msg
     | InitializeFetch
     | NavigateTo Route
     | SetInput InputField String
+    | ToggleMenu
     | FetchHomePage (Result Http.Error Int)
 
 type InputField

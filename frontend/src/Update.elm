@@ -13,14 +13,17 @@ import EveryDict
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        ToggleMenu ->
+            ( { model | menuOpen = not model.menuOpen }, Cmd.none )
+
         SetInput inputType value ->
             ( { model | inputFields = EveryDict.insert inputType value model.inputFields }, Cmd.none )
 
         FetchHomePage (Ok result) ->
-            ( {model | requestFinished = True}, Cmd.none )
+            ( { model | requestFinished = True }, Cmd.none )
 
         FetchHomePage (Result.Err _) ->
-            ( {model | requestFinished = True}, Cmd.none )
+            ( { model | requestFinished = True }, Cmd.none )
 
         NavigateTo route ->
             ( model, navigateTo route )

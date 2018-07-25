@@ -14,22 +14,15 @@ import Prelude ()
 import Prelude.Compat
 
 import Control.Monad.Except
-import Control.Monad.Reader
 import Data.Aeson.Compat
-import Data.Aeson.Types
-import Data.Attoparsec.ByteString
-import Data.ByteString.Lazy.Char8 (ByteString,pack)
+import Data.ByteString.Lazy.Char8 (pack)
 import Data.List
-import Data.Maybe
-import Data.String.Conversions
-import Data.Time.Calendar
 import GHC.Generics
 import Network.HTTP.Media ((//), (/:))
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Servant
 import System.IO
-import Control.Monad
 
 data HTML
 instance Accept HTML where

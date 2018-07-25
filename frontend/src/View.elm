@@ -1,6 +1,6 @@
 module View exposing (..)
 
-import Html exposing (Html, text, div, h1, img, input, button)
+import Html.Styled exposing (..)
 import Model exposing (..)
 import Types exposing (..)
 import Views.HomePage exposing (..)

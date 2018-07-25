@@ -13,6 +13,7 @@ type alias Model =
     { history : List (Maybe Route)
     , inputFields : EveryDict.EveryDict InputField String
     , requestFinished : Bool
+    , menuOpen : Bool
     }
 
 
@@ -21,6 +22,7 @@ initialState location =
     ( { history = [ UrlParser.parseHash routeParser location ]
       , inputFields = EveryDict.empty
       , requestFinished = False
+      , menuOpen = False
       }
     , performInitialFetch
     )
@@ -34,6 +36,7 @@ currentPage model =
 
         Just a ->
             a
+
 
 getInputValue : Model -> InputField -> String
 getInputValue model inputField =
