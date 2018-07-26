@@ -23,6 +23,9 @@ requestForPageLoad maybeRoute =
                 ViewAll ->
                     getHome
 
+                NewCard ->
+                    getHome
+
 
 performInitialFetch : Cmd Msg
 performInitialFetch =
@@ -39,4 +42,3 @@ getHome =
             Http.get url decodeHome
     in
         Http.send FetchHomePage request
-

@@ -25,6 +25,7 @@ update msg model =
         FetchHomePage (Result.Err _) ->
             ( { model | requestFinished = True }, Cmd.none )
 
+        ------------routing handling
         NavigateTo route ->
             ( model, navigateTo route )
 
@@ -36,7 +37,7 @@ update msg model =
                 Just route ->
                     ( model, requestForPageLoad route )
 
-        UrlChange location ->
+        HandleUrlChange location ->
             let
                 maybeRoute =
                     Url.parseHash routeParser location

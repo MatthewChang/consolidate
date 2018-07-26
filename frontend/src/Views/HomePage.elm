@@ -9,111 +9,7 @@ import Css exposing (..)
 import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css, href, src)
 import Html.Styled.Events exposing (onClick)
-
-
-toolbarHeight : Px
-toolbarHeight =
-    (px 50)
-
-
-menuIconStyled : List Style -> Html Msg
-menuIconStyled style =
-    div [ css (style ++ [ marginBottom <| px 6 ]) ] <|
-        List.repeat 3
-            (div
-                [ css
-                    [ width (px 35)
-                    , height <| px 4
-                    , backgroundColor theme.primaryLight
-                    , marginTop <| px 6
-                    , marginLeft <| px 6
-                    , marginRight <| px 6
-                    ]
-                ]
-                []
-            )
-
-
-menu : Model -> Html Msg
-menu model =
-    let
-        menuElement =
-            (div
-                [ css
-                    [ position absolute
-                    , top toolbarHeight
-                    , backgroundColor theme.primaryDark
-                    , left <| px 0
-                    , boxShadow5 (px 0) (px 0) (px 20) (px 0) (rgba 0 0 0 0.4)
-                    ]
-                ]
-                [ ul
-                    [ css
-                        [ listStyleType none
-                        , padding (px 10)
-                        , marginBottom (px 0)
-                        ]
-                    ]
-                    [ li [] [ text "Add new" ]
-                    , li [] [ text "View All" ]
-                    ]
-                ]
-            )
-    in
-        if model.menuOpen then
-            menuElement
-        else
-            div [] []
-
-
-toolbar : Model -> Html Msg
-toolbar model =
-    div
-        [ css
-            [ backgroundColor theme.primaryDark
-            , padding (px 5)
-            , height toolbarHeight
-            , boxShadow5 (px 0) (px 0) (px 20) (px 0) (rgba 0 0 0 0.4)
-            , zIndex <| int 1
-            ]
-        ]
-        [ div
-            [ css
-                [ color theme.primaryLight
-                , textAlign center
-                , width (pct 100)
-                , fontSize (px 28)
-                , flexGrow <| num 0
-                , flexShrink <| num 0
-                ]
-            ]
-            [ div [ onClick ToggleMenu ] [ menuIconStyled [ position absolute, top <| px 7 ] ]
-            , menu model
-            , span [] [ text "Consolidate" ]
-            ]
-        ]
-
-
-theme :
-    { primaryDark : Color
-    , primaryMiddle : Color
-    , primaryLight : Color
-    , background : Color
-    , text : Color
-    , accent : Color
-    , backgroundDarker : Color
-    }
-theme =
-    { primaryDark = hex "5680e9"
-    , primaryMiddle = hex "5ab9ea"
-    , primaryLight = hex "84ceeb"
-
-    --, text = hex "2f2835"
-    , text = hex "353535"
-    , backgroundDarker = hex "c1c8e4"
-    , background = hex "f7f7f7"
-    , accent = hex "8860D0"
-    }
+import Views.Theme exposing (..)
 
 
 card : Html Msg
@@ -130,8 +26,8 @@ card =
         [ span [] [ text "testalsk dfjalskdfjalskdf jalskdjflaskdfjaltestalskdfjalskdfjalskdfjalskdjflaskd fjalsstestalskdfjalskdfjalskdfjalskdjflaskdfjals" ] ]
 
 
-body : Html Msg
-body =
+homePage : Model -> Html Msg
+homePage model =
     div
         [ css
             [ displayFlex
@@ -143,9 +39,3 @@ body =
             ]
         ]
         [ card ]
-
-
-homePage : Model -> Html Msg
-homePage model =
-    div [ css [ displayFlex, flexDirection column, height <| vh 100 ] ]
-        [ toolbar model, body ]

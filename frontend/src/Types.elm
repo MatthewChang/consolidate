@@ -8,34 +8,34 @@ import Time
 
 
 type Msg
-    = UrlChange Navigation.Location
+    = HandleUrlChange Navigation.Location
     | InitializeFetch
     | NavigateTo Route
     | SetInput InputField String
     | ToggleMenu
     | FetchHomePage (Result Http.Error Int)
 
+
 type InputField
-    = NewTag
-    | NewSong
+    = NewCardQuestion
+    | NewCardAnswer
 
 
+type Key a
+    = Key Int
 
-type Id a
-    = Id Int
 
-
-unId : Id a -> Int
-unId (Id a) =
+unKey : Key a -> Int
+unKey (Key a) =
     a
 
 
 type alias JoinEntry a b =
-    ( Id a, Id b )
+    ( Key a, Key b )
 
 
 type alias Record a =
-    { id : Id a, value : a }
+    { id : Key a, value : a }
 
 
 type alias Card =
@@ -43,7 +43,7 @@ type alias Card =
     , answer : String
     , lastCorrectAt : Float
     , waitDuration : Float
-    , categoryId : Id Category
+    , categoryId : Key Category
     }
 
 
@@ -53,13 +53,13 @@ type alias Category =
 
 
 --frontend stuff
-
 --routes stuff
 
 
 type Route
     = RootPage
     | ViewAll
+    | NewCard
 
 
 routeParser : Url.Parser (Route -> a) a
@@ -67,6 +67,7 @@ routeParser =
     Url.oneOf
         [ Url.map RootPage Url.top
         , Url.map ViewAll (Url.s "all")
+        , Url.map NewCard (Url.s "new")
         ]
 
 
@@ -76,9 +77,11 @@ routeToString r =
         RootPage ->
             "/"
 
-        ViewAll  ->
+        ViewAll ->
             "all/"
 
+        NewCard ->
+            "all/"
 
 
 navigateTo : Route -> Cmd msg

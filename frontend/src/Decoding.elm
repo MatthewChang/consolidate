@@ -7,7 +7,7 @@ import Types exposing (..)
 decodeJoins : String -> String -> Decode.Decoder (List (JoinEntry a b))
 decodeJoins id1 id2 =
     Decode.list <|
-        Decode.map2 (\sid tid -> ( Id sid, Id tid ))
+        Decode.map2 (\sid tid -> ( Key sid, Key tid ))
             (field id1 int)
             (field id2 int)
 

@@ -1,0 +1,102 @@
+module Views.AppFrame exposing (..)
+
+import Html.Keyed as Keyed
+import Model exposing (..)
+import Types exposing (..)
+import Bootstrap.Modal as Modal
+import Bootstrap.Button as Button
+import Css exposing (..)
+import Html.Styled exposing (..)
+import Html.Styled.Attributes exposing (css, href, src)
+import Html.Styled.Events exposing (onClick)
+import Views.Theme exposing (..)
+
+
+toolbarHeight : Px
+toolbarHeight =
+    (px 50)
+
+
+menuIconStyled : List Style -> Html Msg
+menuIconStyled style =
+    div [ css (style ++ [ marginBottom <| px 6 ]) ] <|
+        List.repeat 3
+            (div
+                [ css
+                    [ width (px 35)
+                    , height <| px 4
+                    , backgroundColor theme.primaryLight
+                    , marginTop <| px 6
+                    , marginLeft <| px 6
+                    , marginRight <| px 6
+                    ]
+                ]
+                []
+            )
+
+
+menu : Model -> Html Msg
+menu model =
+    let
+        menuElement =
+            (div
+                [ css
+                    [ position absolute
+                    , top toolbarHeight
+                    , backgroundColor theme.primaryDark
+                    , left <| px 0
+                    , boxShadow5 (px 0) (px 0) (px 20) (px 0) (rgba 0 0 0 0.4)
+                    ]
+                ]
+                [ ul
+                    [ css
+                        [ listStyleType none
+                        , padding (px 10)
+                        , marginBottom (px 0)
+                        ]
+                    ]
+                    [ li [] [ text "Home" ]
+                    , li [] [ text "Add new" ]
+                    , li [] [ text "View All" ]
+                    ]
+                ]
+            )
+    in
+        if model.menuOpen then
+            menuElement
+        else
+            div [] []
+
+
+toolbar : Model -> Html Msg
+toolbar model =
+    div
+        [ css
+            [ backgroundColor theme.primaryDark
+            , padding (px 5)
+            , height toolbarHeight
+            , boxShadow5 (px 0) (px 0) (px 20) (px 0) (rgba 0 0 0 0.4)
+            , zIndex <| int 1
+            ]
+        ]
+        [ div
+            [ css
+                [ color theme.primaryLight
+                , textAlign center
+                , width (pct 100)
+                , fontSize (px 28)
+                , flexGrow <| num 0
+                , flexShrink <| num 0
+                ]
+            ]
+            [ div [ onClick ToggleMenu ] [ menuIconStyled [ position absolute, top <| px 7 ] ]
+            , menu model
+            , span [] [ text "Consolidate" ]
+            ]
+        ]
+
+
+appFrame : Model -> Html Msg -> Html Msg
+appFrame model body =
+    div [ css [ displayFlex, flexDirection column, height <| vh 100 ] ]
+        [ toolbar model, body ]

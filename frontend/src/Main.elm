@@ -11,7 +11,7 @@ import Html.Styled exposing (toUnstyled)
 
 main : Program Never Model Msg
 main =
-    Navigation.program UrlChange
+    Navigation.program HandleUrlChange
         { view = view >> toUnstyled
         , init = initialState
         , update = update
