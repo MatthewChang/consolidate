@@ -19,6 +19,7 @@ type Msg
 type InputField
     = NewCardQuestion
     | NewCardAnswer
+    | NewCategory
 
 
 inputLabel : InputField -> String
@@ -29,6 +30,9 @@ inputLabel a =
 
         NewCardAnswer ->
             "New Card Answer"
+
+        NewCategory ->
+            "Other"
 
 
 type Key a

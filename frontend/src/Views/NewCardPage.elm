@@ -12,21 +12,27 @@ import Html.Styled.Events exposing (..)
 import Views.Theme exposing (..)
 
 
-textInput : Model -> InputField -> Html Msg
-textInput model ty =
+textInputBase : Bool -> Model -> InputField -> Html Msg
+textInputBase area model ty =
     let
         label =
             inputLabel ty
+
+        ( comp, rowHeight ) =
+            if area then
+                ( textarea, 200 )
+            else
+                ( input, 40 )
     in
         div []
             [ div [] [ text <| label ]
-            , textarea
+            , comp
                 [ placeholder label
                 , onInput <| SetInput ty
-                , value <| getInputValue model ty 
+                , value <| getInputValue model ty
                 , css
                     [ Css.width <| pct 100
-                    , Css.height <| px 200
+                    , Css.height <| px rowHeight
                     , color theme.text
                     , backgroundColor theme.backgroundDarker
                     , border <| px 0
@@ -39,7 +45,22 @@ textInput model ty =
             ]
 
 
+textInput : Model -> InputField -> Html Msg
+textInput =
+    textInputBase False
+
+
+textArea : Model -> InputField -> Html Msg
+textArea =
+    textInputBase True
+
+
+categorySelect : Model -> Html Msg
+categorySelect m =
+    div [] [ textInput m NewCategory ]
+
+
 newCardPage : Model -> Html Msg
 newCardPage model =
     div [ css [ padding <| px 25 ] ]
-        [ textInput model NewCardQuestion, textInput model NewCardAnswer]
+        [ textArea model NewCardQuestion, textArea model NewCardAnswer, categorySelect model ]
