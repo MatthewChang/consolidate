@@ -6,7 +6,6 @@ import Navigation
 import Types exposing (..)
 import Bootstrap.Modal as Modal
 import Requests exposing (..)
-import Debug
 import EveryDict
 
 
@@ -27,7 +26,7 @@ update msg model =
 
         ------------routing handling
         NavigateTo route ->
-            ( model, navigateTo route )
+            ( { model | menuOpen = False }, navigateTo route )
 
         InitializeFetch ->
             case (List.head model.history) of

@@ -21,6 +21,16 @@ type InputField
     | NewCardAnswer
 
 
+inputLabel : InputField -> String
+inputLabel a =
+    case a of
+        NewCardQuestion ->
+            "New Card Question"
+
+        NewCardAnswer ->
+            "New Card Answer"
+
+
 type Key a
     = Key Int
 
@@ -81,7 +91,7 @@ routeToString r =
             "all/"
 
         NewCard ->
-            "all/"
+            "new/"
 
 
 navigateTo : Route -> Cmd msg

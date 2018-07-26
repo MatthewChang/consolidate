@@ -55,9 +55,9 @@ menu model =
                         , marginBottom (px 0)
                         ]
                     ]
-                    [ li [] [ text "Home" ]
-                    , li [] [ text "Add new" ]
-                    , li [] [ text "View All" ]
+                    [ li [onClick <| NavigateTo RootPage] [ text "Home" ]
+                    , li [onClick <| NavigateTo NewCard] [ text "Add new" ]
+                    , li [onClick <| NavigateTo ViewAll] [ text "View All" ]
                     ]
                 ]
             )

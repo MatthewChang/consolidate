@@ -5,6 +5,7 @@ import Model exposing (..)
 import Types exposing (..)
 import Views.HomePage exposing (..)
 import Views.AppFrame exposing (..)
+import Views.NewCardPage exposing (..)
 
 
 view : Model -> Html Msg
@@ -22,6 +23,6 @@ view model =
                     homePage model
 
                 Just NewCard ->
-                    homePage model
+                    newCardPage model
         else
             text "Loading..."
