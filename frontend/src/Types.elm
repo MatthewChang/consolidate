@@ -12,8 +12,10 @@ type Msg
     | InitializeFetch
     | NavigateTo Route
     | SetInput InputField String
-    | ToggleMenu
     | FetchHomePage (Result Http.Error Int)
+    | SubmitNewCardRequest (Result Http.Error Int)
+    | ToggleMenu
+    | SubmitNewCard
 
 
 type InputField

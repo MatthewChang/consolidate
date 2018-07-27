@@ -60,7 +60,25 @@ categorySelect m =
     div [] [ textInput m NewCategory ]
 
 
+styledButton : String -> Msg -> Html Msg
+styledButton a m =
+    button
+        [ onClick m,css
+            [ padding <| px 7
+            , backgroundColor theme.primaryDark
+            , color theme.primaryLight
+            , boxShadow5 (px 0) (px 0) (px 20) (px 0) (rgba 0 0 0 0.4)
+            , borderRadius <| px 10
+            ]
+        ]
+        [ text a ]
+
+
 newCardPage : Model -> Html Msg
 newCardPage model =
     div [ css [ padding <| px 25 ] ]
-        [ textArea model NewCardQuestion, textArea model NewCardAnswer, categorySelect model ]
+        [ textArea model NewCardQuestion
+        , textArea model NewCardAnswer
+        , categorySelect model
+        , styledButton "Done" SubmitNewCard
+        ]

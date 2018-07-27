@@ -5,18 +5,27 @@ import UrlParser as Url exposing ((</>), (<?>), s, int, stringParam, top)
 import Navigation
 import Types exposing (..)
 import Bootstrap.Modal as Modal
-import Requests exposing (..)
+import Requests
 import EveryDict
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        SubmitNewCard ->
+            ( model, Requests.submitNewCard model)
+
         ToggleMenu ->
             ( { model | menuOpen = not model.menuOpen }, Cmd.none )
 
         SetInput inputType value ->
             ( { model | inputFields = EveryDict.insert inputType value model.inputFields }, Cmd.none )
+        ----requests
+        SubmitNewCardRequest (Ok result) ->
+            (  model, Cmd.none )
+
+        SubmitNewCardRequest (Err _) ->
+            (  model, Cmd.none )
 
         FetchHomePage (Ok result) ->
             ( { model | requestFinished = True }, Cmd.none )
@@ -34,11 +43,11 @@ update msg model =
                     ( model, Cmd.none )
 
                 Just route ->
-                    ( model, requestForPageLoad route )
+                    ( model, Requests.requestForPageLoad route )
 
         HandleUrlChange location ->
             let
                 maybeRoute =
                     Url.parseHash routeParser location
             in
-                ( { model | history = maybeRoute :: model.history }, requestForPageLoad maybeRoute )
+                ( { model | history = maybeRoute :: model.history }, Requests.requestForPageLoad maybeRoute )

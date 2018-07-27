@@ -2,12 +2,16 @@ module Model exposing (..)
 
 import Navigation
 import Bootstrap.Modal as Modal
-import Requests exposing (..)
 import Types exposing (..)
 import UrlParser
 import Bootstrap.Dropdown as Dropdown
 import EveryDict
+import Task
 
+
+performInitialFetch : Cmd Msg
+performInitialFetch =
+    Task.succeed InitializeFetch |> Task.perform identity
 
 type alias Model =
     { history : List (Maybe Route)

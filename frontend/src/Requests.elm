@@ -5,8 +5,7 @@ import Types exposing (..)
 import Json.Encode as Encode
 import Json.Decode as Decode exposing (field, int, string, map)
 import Http
-import Task
-import Debug
+import Model exposing (..)
 
 
 requestForPageLoad : Maybe Route -> Cmd Msg
@@ -27,9 +26,6 @@ requestForPageLoad maybeRoute =
                     getHome
 
 
-performInitialFetch : Cmd Msg
-performInitialFetch =
-    Task.succeed InitializeFetch |> Task.perform identity
 
 
 getHome : Cmd Msg
@@ -42,3 +38,17 @@ getHome =
             Http.get url decodeHome
     in
         Http.send FetchHomePage request
+
+
+submitNewCard : Model -> Cmd Msg
+submitNewCard model =
+    let
+        url =
+            "/cards"
+
+        request =
+            Http.post url (Http.jsonBody (newCardEncoder model)) decodeHome
+    in
+        Http.send SubmitNewCardRequest request
+
+
