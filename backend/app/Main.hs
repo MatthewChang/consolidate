@@ -43,6 +43,8 @@ instance MimeRender HTML String where
 type API = "position" :> Capture "x" Int :> Capture "y" Int :> Get '[JSON] Position
       :<|> "hello" :> QueryParam "name" String :> Get '[JSON] HelloMessage
       :<|> "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] (Record Card)
+      :<|> "cards" :> Get '[JSON] [Record Card]
+      :<|> "categories" :> Get '[JSON] [Record Category]
       :<|> Get '[HTML] String
       :<|> "static" :> Raw
 
@@ -86,10 +88,15 @@ connectionPool = createPool
   10
   10
 
-
 server3 :: Pool Connection -> Server API
-server3 pool = position :<|> hello :<|> card :<|> home :<|> serveDirectoryWebApp
-  "static/static"
+server3 pool =
+  position
+    :<|> hello
+    :<|> card
+    :<|> cards
+    :<|> undefined
+    :<|> home
+    :<|> serveDirectoryWebApp "static/static"
  where
   position :: Int -> Int -> Handler Position
   position x y = return (Position x y)
@@ -99,12 +106,14 @@ server3 pool = position :<|> hello :<|> card :<|> home :<|> serveDirectoryWebApp
     Nothing -> "Hello, anonymous coward"
     Just n  -> "Hello, " ++ n
 
+  cards :: Handler [Record Card]
+  cards = liftIO . withResource pool $ getAll' 
+
   card :: NewCardBody -> Handler (Record Card)
   card b = liftIO . withResource pool $ \conn -> do
     cid <- case get #categoryId b of
-      Just i -> pure i
-      Nothing ->
-        key <$> insertElement (Category $ get #newCategory b) conn
+      Just i  -> pure i
+      Nothing -> key <$> insertElement (Category $ get #newCategory b) conn
     time <- getCurrentTime
     let due = addUTCTime 15 time
     insertElement (Card (get #question b) (get #answer b) time due cid) conn
@@ -116,6 +125,12 @@ server3 pool = position :<|> hello :<|> card :<|> home :<|> serveDirectoryWebApp
 userAPI :: Proxy API
 userAPI = Proxy
 
+{-nt :: Pool Connection -> Handler x -> Handler x-}
+{-{-nt pool (ConnectionHandler f) = return-}-}
+{-nt pool (Handler f) = undefined-}
+
+{-modifiedServer :: Pool Connection -> Server API-}
+{-modifiedServer pool = hoistServer userAPI  (nt pool) $ server3 pool-}
 -- 'serve' comes from servant and hands you a WAI Application,
 -- which you can think of as an "abstract" web application,
 -- not yet a webserver.

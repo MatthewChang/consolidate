@@ -207,6 +207,9 @@ getAll
   => m ([Record a])
 getAll = runQuery $ getFromTable tableName
 
+getAll' :: (Table a, FromRow a) => Connection -> IO [Record a]
+getAll' = getFromTable tableName
+
 {-we need the second layer of function here to make the type inference find the-}
 {-right "tableName function in getAll"-}
 getFromTable :: (FromRow a) => TableName a -> Connection -> IO ([Record a])
@@ -249,7 +252,8 @@ insertQuery (TableName n) values a =
 {-with added debugging-}
 executeInsertQuery
   :: (ToRow a, FromRow a) => ConstructedQuery a -> Connection -> IO (Record a)
-executeInsertQuery (ConstructedQuery q e) conn = head <$> query conn (trace (show q) q) (trace (show e) e)
+executeInsertQuery (ConstructedQuery q e) conn =
+  head <$> query conn (trace (show q) q) (trace (show e) e)
 
 {-Generic delete logic-}
 deleteRecord
