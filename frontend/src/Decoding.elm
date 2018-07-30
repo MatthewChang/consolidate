@@ -2,6 +2,7 @@ module Decoding exposing (..)
 
 import Json.Decode as Decode exposing (field, int, string)
 import Json.Encode as Encode
+import Json.Encode.Extra exposing (maybe)
 import Types exposing (..)
 import Model exposing (..)
 
@@ -14,21 +15,25 @@ decodeJoins id1 id2 =
             (field id2 int)
 
 
+
 --decodeHome : Decode.Decoder HomePageResponse
 --decodeHome =
-    --Decode.map3 (\songs tags songTags -> HomePageResponse songs tags songTags)
-        --(field "songs" decodeSongs)
-        --(field "tags" decodeTags)
-        --(field "songTags" <| decodeSongTags)
+--Decode.map3 (\songs tags songTags -> HomePageResponse songs tags songTags)
+--(field "songs" decodeSongs)
+--(field "tags" decodeTags)
+--(field "songTags" <| decodeSongTags)
+
 
 decodeHome : Decode.Decoder Int
-decodeHome = int
+decodeHome =
+    int
+
 
 newCardEncoder : Model -> Encode.Value
 newCardEncoder model =
     Encode.object
         [ ( "question", Encode.string <| getInputValue model NewCardQuestion )
-        , ( "answer", Encode.string <| getInputValue model NewCardAnswer)
-        , ( "categoryId", Encode.string <| toString 0)
-        , ( "newCategory", Encode.string <| getInputValue model NewCategory)
+        , ( "answer", Encode.string <| getInputValue model NewCardAnswer )
+        , ( "categoryId", maybe Encode.int <| Nothing )
+        , ( "newCategory", Encode.string <| getInputValue model NewCategory )
         ]

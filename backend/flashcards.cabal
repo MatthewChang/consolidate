@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 1fead2cc56b32768de786712302e208237e6fb9fa9eb0dff9fcdc37c96b7057a
+-- hash: 54b01da9a006e2fc541ca1b149c223e9a4791dabe72de8a4578f53f79a82b3f1
 
 name:           flashcards
 version:        0.0.1
@@ -27,6 +27,7 @@ library
   exposed-modules:
       Union
       Lib
+      SuperRecordExtra
   other-modules:
       Tables
       Paths_flashcards
@@ -41,14 +42,12 @@ library
     , attoparsec
     , base >=4.9 && <5
     , base-compat
-    , blaze-html
-    , blaze-markup
     , bytestring
     , casing
     , directory
     , http-media
     , http-types
-    , lucid
+    , iso8601-time
     , monad-logger
     , mtl
     , postgresql-simple
@@ -58,9 +57,11 @@ library
     , servant
     , servant-server
     , string-conversions
+    , superrecord
     , text
     , time
     , wai
+    , wai-extra
     , wai-middleware-static
     , warp
   default-language: Haskell2010
@@ -81,15 +82,13 @@ executable flashcards
     , attoparsec
     , base >=4.9 && <5
     , base-compat
-    , blaze-html
-    , blaze-markup
     , bytestring
     , casing
     , directory
     , flashcards
     , http-media
     , http-types
-    , lucid
+    , iso8601-time
     , monad-logger
     , mtl
     , postgresql-simple
@@ -99,9 +98,11 @@ executable flashcards
     , servant
     , servant-server
     , string-conversions
+    , superrecord
     , text
     , time
     , wai
+    , wai-extra
     , wai-middleware-static
     , warp
   default-language: Haskell2010
@@ -126,8 +127,6 @@ test-suite spec
     , attoparsec
     , base >=4.9 && <5
     , base-compat
-    , blaze-html
-    , blaze-markup
     , bytestring
     , casing
     , directory
@@ -136,7 +135,7 @@ test-suite spec
     , hspec-discover
     , http-media
     , http-types
-    , lucid
+    , iso8601-time
     , monad-logger
     , mtl
     , postgresql-simple
@@ -147,9 +146,11 @@ test-suite spec
     , servant-server
     , should-not-typecheck
     , string-conversions
+    , superrecord
     , text
     , time
     , wai
+    , wai-extra
     , wai-middleware-static
     , warp
   default-language: Haskell2010

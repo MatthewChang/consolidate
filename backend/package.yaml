@@ -36,11 +36,10 @@ dependencies:
   - aeson-compat
   - attoparsec
   - http-media
-  - lucid
   - time
-  - blaze-markup
-  - blaze-html
   - directory
+  - superrecord
+  - wai-extra
 
 
 library:
@@ -48,6 +47,7 @@ library:
   exposed-modules:
     - Union
     - Lib
+    - SuperRecordExtra
 
 executable:
   main: Main.hs

@@ -7,6 +7,7 @@
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE OverloadedLabels #-}
 
 module ApiType where
 
@@ -16,13 +17,22 @@ import Prelude.Compat
 import Control.Monad.Except
 import Data.Aeson.Compat
 import Data.ByteString.Lazy.Char8 (pack)
-import Data.List
 import GHC.Generics
 import Network.HTTP.Media ((//), (/:))
+import           Data.Text (Text)
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Servant
 import System.IO
+import Tables
+import Lib
+import Data.Time.Clock
+import SuperRecord hiding (Record)
+import           Data.Pool
+import           Database.PostgreSQL.Simple
+import Network.Wai.Middleware.RequestLogger
+{-import SuperRecordExtra-}
+
 
 data HTML
 instance Accept HTML where
@@ -32,7 +42,7 @@ instance MimeRender HTML String where
 
 type API = "position" :> Capture "x" Int :> Capture "y" Int :> Get '[JSON] Position
       :<|> "hello" :> QueryParam "name" String :> Get '[JSON] HelloMessage
-      :<|> "marketing" :> ReqBody '[JSON] ClientInfo :> Post '[JSON] Email
+      :<|> "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] (Record Card)
       :<|> Get '[HTML] String
       :<|> "static" :> Raw
 
@@ -47,15 +57,17 @@ newtype HelloMessage = HelloMessage { msg :: String } deriving Generic
 
 instance ToJSON HelloMessage
 
-data ClientInfo = ClientInfo
-  { clientName :: String
-  , clientEmail :: String
-  , clientAge :: Int
-  , clientInterestedIn :: [String]
-  } deriving Generic
+{-data NewCardBody = NewCardBody-}
+  {-{ question :: String-}
+  {-, answer :: String-}
+  {-, categoryId :: Maybe Int-}
+  {-, newCategory :: String-}
+  {-} deriving Generic-}
+type NewCardBody = Rec '["question" := Text
+                  , "answer" := Text
+                  , "categoryId" := Maybe (Key Category)
+                  , "newCategory" := Text]
 
-instance FromJSON ClientInfo
-instance ToJSON ClientInfo
 
 data Email = Email
   { from :: String
@@ -65,24 +77,19 @@ data Email = Email
   } deriving Generic
 
 instance ToJSON Email
-emailForClient :: ClientInfo -> Email
-emailForClient c = Email from' to' subject' body'
- where
-  from'    = "great@company.com"
-  to'      = clientEmail c
-  subject' = "Hey " ++ clientName c ++ ", we miss you!"
-  body' =
-    "Hi "
-      ++ clientName c
-      ++ ",\n\n"
-      ++ "Since you've recently turned "
-      ++ show (clientAge c)
-      ++ ", have you checked out our latest "
-      ++ intercalate ", " (clientInterestedIn c)
-      ++ " products? Give us a visit!"
 
-server3 :: Server API
-server3 = position :<|> hello :<|> marketing :<|> home :<|> serveDirectoryWebApp "static/static"
+connectionPool :: IO (Pool Connection)
+connectionPool = createPool
+  (connect (ConnectInfo "localhost" 5432 "" "" "flashcards"))
+  close
+  1
+  10
+  10
+
+
+server3 :: Pool Connection -> Server API
+server3 pool = position :<|> hello :<|> card :<|> home :<|> serveDirectoryWebApp
+  "static/static"
  where
   position :: Int -> Int -> Handler Position
   position x y = return (Position x y)
@@ -92,8 +99,15 @@ server3 = position :<|> hello :<|> marketing :<|> home :<|> serveDirectoryWebApp
     Nothing -> "Hello, anonymous coward"
     Just n  -> "Hello, " ++ n
 
-  marketing :: ClientInfo -> Handler Email
-  marketing clientinfo = return (emailForClient clientinfo)
+  card :: NewCardBody -> Handler (Record Card)
+  card b = liftIO . withResource pool $ \conn -> do
+    cid <- case get #categoryId b of
+      Just i -> pure i
+      Nothing ->
+        key <$> insertElement (Category $ get #newCategory b) conn
+    time <- getCurrentTime
+    let due = addUTCTime 15 time
+    insertElement (Card (get #question b) (get #answer b) time due cid) conn
 
   home = liftIO $ do
     handle <- openFile "static/index.html" ReadMode
@@ -105,8 +119,10 @@ userAPI = Proxy
 -- 'serve' comes from servant and hands you a WAI Application,
 -- which you can think of as an "abstract" web application,
 -- not yet a webserver.
-app1 :: Application
-app1 = serve userAPI server3
+app1 :: Pool Connection -> Application
+app1 pool = serve userAPI $ server3 pool
 
 main :: IO ()
-main = run 8080 app1
+main = do
+  pool <- connectionPool
+  run 8080 $ logStdoutDev $ app1 pool

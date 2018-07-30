@@ -34,6 +34,8 @@ import           Web.Spock                            hiding (head)
 import Text.Regex
 import Union
 import Data.String.Conversions hiding ((<>))
+import Debug.Trace (trace)
+
 
 newtype TableName a = TableName {unTableName :: Identifier}
 newtype ValueList a = ValueList {fromValueList :: [Text]} deriving (Show,Eq)
@@ -244,9 +246,10 @@ insertQuery (TableName n) values a =
         )
         ([toField n] ++ (toRow values) ++ (toRow a))
 
+{-with added debugging-}
 executeInsertQuery
   :: (ToRow a, FromRow a) => ConstructedQuery a -> Connection -> IO (Record a)
-executeInsertQuery (ConstructedQuery q e) conn = head <$> query conn q e
+executeInsertQuery (ConstructedQuery q e) conn = head <$> query conn (trace (show q) q) (trace (show e) e)
 
 {-Generic delete logic-}
 deleteRecord

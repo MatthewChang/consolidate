@@ -26,8 +26,6 @@ requestForPageLoad maybeRoute =
                     getHome
 
 
-
-
 getHome : Cmd Msg
 getHome =
     let
@@ -50,5 +48,3 @@ submitNewCard model =
             Http.post url (Http.jsonBody (newCardEncoder model)) decodeHome
     in
         Http.send SubmitNewCardRequest request
-
-
