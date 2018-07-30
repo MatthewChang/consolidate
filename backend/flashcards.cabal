@@ -2,7 +2,7 @@
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 54b01da9a006e2fc541ca1b149c223e9a4791dabe72de8a4578f53f79a82b3f1
+-- hash: 4f9b333a4ccbd65d8e2af4334a031116628f2be9b2619153a0c20d1ce6a1c0bd
 
 name:           flashcards
 version:        0.0.1
@@ -47,7 +47,6 @@ library
     , directory
     , http-media
     , http-types
-    , iso8601-time
     , monad-logger
     , mtl
     , postgresql-simple
@@ -60,6 +59,7 @@ library
     , superrecord
     , text
     , time
+    , transformers
     , wai
     , wai-extra
     , wai-middleware-static
@@ -88,7 +88,6 @@ executable flashcards
     , flashcards
     , http-media
     , http-types
-    , iso8601-time
     , monad-logger
     , mtl
     , postgresql-simple
@@ -101,6 +100,7 @@ executable flashcards
     , superrecord
     , text
     , time
+    , transformers
     , wai
     , wai-extra
     , wai-middleware-static
@@ -135,7 +135,6 @@ test-suite spec
     , hspec-discover
     , http-media
     , http-types
-    , iso8601-time
     , monad-logger
     , mtl
     , postgresql-simple
@@ -149,6 +148,7 @@ test-suite spec
     , superrecord
     , text
     , time
+    , transformers
     , wai
     , wai-extra
     , wai-middleware-static

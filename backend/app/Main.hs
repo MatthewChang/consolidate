@@ -31,6 +31,7 @@ import SuperRecord hiding (Record)
 import           Data.Pool
 import           Database.PostgreSQL.Simple
 import Network.Wai.Middleware.RequestLogger
+import Control.Monad.Trans.Reader
 {-import SuperRecordExtra-}
 
 
@@ -94,7 +95,7 @@ server3 pool =
     :<|> hello
     :<|> card
     :<|> cards
-    :<|> undefined
+    :<|> categories
     :<|> home
     :<|> serveDirectoryWebApp "static/static"
  where
@@ -109,6 +110,9 @@ server3 pool =
   cards :: Handler [Record Card]
   cards = liftIO . withResource pool $ getAll' 
 
+  categories :: Handler [Record Category]
+  categories = liftIO . withResource pool $ getAll' 
+
   card :: NewCardBody -> Handler (Record Card)
   card b = liftIO . withResource pool $ \conn -> do
     cid <- case get #categoryId b of
@@ -118,6 +122,18 @@ server3 pool =
     let due = addUTCTime 15 time
     insertElement (Card (get #question b) (get #answer b) time due cid) conn
 
+  {-card2 :: NewCardBody -> ReaderT Connection IO (Record Card)-}
+  {-card2 b = do-}
+    {-cid <- case get #categoryId b of-}
+      {-Just i  -> pure i-}
+      {-Nothing -> key <$> (ReaderT $ insertElement (Category $ get #newCategory b))-}
+    {-time <- liftIO getCurrentTime-}
+    {-let due = addUTCTime 15 time-}
+    {-ReaderT $ insertElement (Card (get #question b) (get #answer b) time due cid)-}
+
+  {-card2 :: NewCardBody -> ReaderT Connection IO Int -}
+  {-card2 b = reader (\c -> 0)-}
+
   home = liftIO $ do
     handle <- openFile "static/index.html" ReadMode
     hGetContents handle
@@ -125,12 +141,11 @@ server3 pool =
 userAPI :: Proxy API
 userAPI = Proxy
 
-{-nt :: Pool Connection -> Handler x -> Handler x-}
-{-{-nt pool (ConnectionHandler f) = return-}-}
-{-nt pool (Handler f) = undefined-}
+nt :: Pool Connection -> ReaderT Connection IO x -> Handler x
+nt pool (ReaderT r) = liftIO $ withResource pool r
 
 {-modifiedServer :: Pool Connection -> Server API-}
-{-modifiedServer pool = hoistServer userAPI  (nt pool) $ server3 pool-}
+{-modifiedServer pool = hoistServer userAPI (nt pool) $ server3 pool-}
 -- 'serve' comes from servant and hands you a WAI Application,
 -- which you can think of as an "abstract" web application,
 -- not yet a webserver.

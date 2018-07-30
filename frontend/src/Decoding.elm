@@ -37,3 +37,10 @@ newCardEncoder model =
         , ( "categoryId", maybe Encode.int <| Nothing )
         , ( "newCategory", Encode.string <| getInputValue model NewCategory )
         ]
+
+
+decodeCategories : Decode.Decoder (List (Record Category))
+decodeCategories =
+    Decode.list <| Decode.map2 (\id name -> Record (Key id) (Category name))
+        (field "id" int)
+        (field "name" string)

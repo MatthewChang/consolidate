@@ -21,6 +21,12 @@ update msg model =
         SetInput inputType value ->
             ( { model | inputFields = EveryDict.insert inputType value model.inputFields }, Cmd.none )
         ----requests
+        GetCategories (Ok result) ->
+            (  model, Cmd.none )
+
+        GetCategories (Err _) ->
+            (  model, Cmd.none )
+
         SubmitNewCardRequest (Ok result) ->
             (  model, Cmd.none )
 

@@ -14,6 +14,7 @@ type Msg
     | SetInput InputField String
     | FetchHomePage (Result Http.Error Int)
     | SubmitNewCardRequest (Result Http.Error Int)
+    | GetCategories (Result Http.Error (List (Record Category)))
     | ToggleMenu
     | SubmitNewCard
 

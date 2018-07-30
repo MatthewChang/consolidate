@@ -23,7 +23,7 @@ requestForPageLoad maybeRoute =
                     getHome
 
                 NewCard ->
-                    getHome
+                    getCategories
 
 
 getHome : Cmd Msg
@@ -48,3 +48,14 @@ submitNewCard model =
             Http.post url (Http.jsonBody (newCardEncoder model)) decodeHome
     in
         Http.send SubmitNewCardRequest request
+
+getCategories : Cmd Msg
+getCategories =
+    let
+        url =
+            "/categories"
+
+        request =
+            Http.get url decodeCategories
+    in
+        Http.send GetCategories request
