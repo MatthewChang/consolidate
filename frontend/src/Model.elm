@@ -13,11 +13,18 @@ performInitialFetch : Cmd Msg
 performInitialFetch =
     Task.succeed InitializeFetch |> Task.perform identity
 
+
+type alias SelectModel = {
+  newCardCategorySelect : Maybe NewCardCategorySelect
+}
+
 type alias Model =
     { history : List (Maybe Route)
     , inputFields : EveryDict.EveryDict InputField String
+    , selectFields : SelectModel
     , requestFinished : Bool
     , menuOpen : Bool
+    , categories : List (Record Category)
     }
 
 
@@ -25,8 +32,10 @@ initialState : Navigation.Location -> ( Model, Cmd Msg )
 initialState location =
     ( { history = [ UrlParser.parseHash routeParser location ]
       , inputFields = EveryDict.empty
+      , selectFields = {newCardCategorySelect = Nothing}
       , requestFinished = False
       , menuOpen = False
+      , categories = []
       }
     , performInitialFetch
     )

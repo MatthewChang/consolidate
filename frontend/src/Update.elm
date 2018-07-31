@@ -7,31 +7,39 @@ import Types exposing (..)
 import Bootstrap.Modal as Modal
 import Requests
 import EveryDict
+import Updaters.SelectUpdate exposing (..)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SubmitNewCard ->
-            ( model, Requests.submitNewCard model)
+            ( model, Requests.submitNewCard model )
 
         ToggleMenu ->
             ( { model | menuOpen = not model.menuOpen }, Cmd.none )
 
+        SetSelect value ->
+            ( { model | selectFields = selectUpdate value model.selectFields }, Cmd.none )
+
         SetInput inputType value ->
             ( { model | inputFields = EveryDict.insert inputType value model.inputFields }, Cmd.none )
+
+        --SetSelect select value ->
+            --( { model | inputFields = EveryDict.insert inputType value model.inputFields }, Cmd.none )
+
         ----requests
         GetCategories (Ok result) ->
-            (  model, Cmd.none )
+            ( { model | requestFinished = True, categories = result }, Cmd.none )
 
         GetCategories (Err _) ->
-            (  model, Cmd.none )
+            ( model, Cmd.none )
 
         SubmitNewCardRequest (Ok result) ->
-            (  model, Cmd.none )
+            ( model, Cmd.none )
 
         SubmitNewCardRequest (Err _) ->
-            (  model, Cmd.none )
+            ( model, Cmd.none )
 
         FetchHomePage (Ok result) ->
             ( { model | requestFinished = True }, Cmd.none )

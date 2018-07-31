@@ -57,13 +57,15 @@ textArea =
 
 categorySelect : Model -> Html Msg
 categorySelect m =
-    div [] [ textInput m NewCategory ]
+    --div [] [ textInput m NewCategory ]
+    div [] [ select [] <| List.map (\e -> option [] [ text e.value.name ]) m.categories ]
 
 
 styledButton : String -> Msg -> Html Msg
 styledButton a m =
     button
-        [ onClick m,css
+        [ onClick m
+        , css
             [ padding <| px 7
             , backgroundColor theme.primaryDark
             , color theme.primaryLight

@@ -12,6 +12,7 @@ type Msg
     | InitializeFetch
     | NavigateTo Route
     | SetInput InputField String
+    | SetSelect SelectInput
     | FetchHomePage (Result Http.Error Int)
     | SubmitNewCardRequest (Result Http.Error Int)
     | GetCategories (Result Http.Error (List (Record Category)))
@@ -23,6 +24,16 @@ type InputField
     = NewCardQuestion
     | NewCardAnswer
     | NewCategory
+
+
+type SelectInput
+    = NewCardCategory NewCardCategorySelect
+    | FilterByCategory
+
+
+type NewCardCategorySelect
+    = Existing (Key Category)
+    | Other
 
 
 inputLabel : InputField -> String
