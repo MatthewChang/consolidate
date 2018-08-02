@@ -4,6 +4,7 @@ import Json.Decode as Decode exposing (field, int, string)
 import Json.Encode as Encode
 import Json.Encode.Extra exposing (maybe)
 import Types exposing (..)
+import Types.Input exposing (..)
 import Model exposing (..)
 
 
@@ -32,10 +33,10 @@ decodeHome =
 newCardEncoder : Model -> Encode.Value
 newCardEncoder model =
     Encode.object
-        [ ( "question", Encode.string <| getInputValue model NewCardQuestion )
-        , ( "answer", Encode.string <| getInputValue model NewCardAnswer )
+        [ ( "question", Encode.string <| getInputValue NewCardQuestion model )
+        , ( "answer", Encode.string <| getInputValue NewCardAnswer model )
         , ( "categoryId", maybe Encode.int <| Nothing )
-        , ( "newCategory", Encode.string <| getInputValue model NewCategory )
+        , ( "newCategory", Encode.string <| getInputValue NewCategory model )
         ]
 
 

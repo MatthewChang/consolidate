@@ -6,10 +6,15 @@ import Types exposing (..)
 import Bootstrap.Modal as Modal
 import Bootstrap.Button as Button
 import Css exposing (..)
+import Html exposing (map)
 import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (..)
+import Html.Styled.Attributes exposing (value, placeholder, css)
 import Html.Styled.Events exposing (..)
 import Views.Theme exposing (..)
+import Types.Input exposing (..)
+import Types.Msg exposing (..)
+import Types.KeyOrOtherDropdownOption exposing (..)
+import Ui.Chooser as Chooser
 
 
 textInputBase : Bool -> Model -> InputField -> Html Msg
@@ -29,7 +34,7 @@ textInputBase area model ty =
             , comp
                 [ placeholder label
                 , onInput <| SetInput ty
-                , value <| getInputValue model ty
+                , value <| getInputValue ty model
                 , css
                     [ Css.width <| pct 100
                     , Css.height <| px rowHeight
@@ -55,10 +60,28 @@ textArea =
     textInputBase True
 
 
+
+--categorySelect : Model -> Html Msg
+--categorySelect m =
+----div [] [ textInput m NewCategory ]
+--let
+--toOption =
+--(\e -> option [ value <| toValue <| Existing e.id ] [ text e.value.name ])
+--in
+--div []
+--[ select
+--[ value <|
+--toValue m.selectFields.newCardCategorySelect
+--, onInput <| SetSelect << NewCardCategory
+--]
+--<|
+--List.map toOption m.categories
+--]
+
+
 categorySelect : Model -> Html Msg
-categorySelect m =
-    --div [] [ textInput m NewCategory ]
-    div [] [ select [] <| List.map (\e -> option [] [ text e.value.name ]) m.categories ]
+categorySelect =
+    fromUnstyled << Html.map (SetChooser NewCardCategory) << Chooser.view << getChooserValue NewCardCategory
 
 
 styledButton : String -> Msg -> Html Msg

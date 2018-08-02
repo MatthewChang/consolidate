@@ -3,7 +3,7 @@ module Main exposing (..)
 import Model exposing (..)
 import Update exposing (..)
 import View exposing (..)
-import Types exposing (..)
+import Types.Msg exposing (..)
 import Navigation
 import Subscriptions
 import Html.Styled exposing (toUnstyled)

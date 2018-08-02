@@ -6,6 +6,7 @@ import Types exposing (..)
 import Views.HomePage exposing (..)
 import Views.AppFrame exposing (..)
 import Views.NewCardPage exposing (..)
+import Types.Msg exposing (..)
 
 
 view : Model -> Html Msg

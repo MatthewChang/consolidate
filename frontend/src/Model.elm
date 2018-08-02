@@ -7,6 +7,9 @@ import UrlParser
 import Bootstrap.Dropdown as Dropdown
 import EveryDict
 import Task
+import Types.Input exposing (..)
+import Types.Msg exposing (..)
+import Ui.Chooser as Chooser
 
 
 performInitialFetch : Cmd Msg
@@ -14,14 +17,10 @@ performInitialFetch =
     Task.succeed InitializeFetch |> Task.perform identity
 
 
-type alias SelectModel = {
-  newCardCategorySelect : Maybe NewCardCategorySelect
-}
-
 type alias Model =
     { history : List (Maybe Route)
     , inputFields : EveryDict.EveryDict InputField String
-    , selectFields : SelectModel
+    , chooserFields : EveryDict.EveryDict ChooserField Chooser.Model
     , requestFinished : Bool
     , menuOpen : Bool
     , categories : List (Record Category)
@@ -32,7 +31,7 @@ initialState : Navigation.Location -> ( Model, Cmd Msg )
 initialState location =
     ( { history = [ UrlParser.parseHash routeParser location ]
       , inputFields = EveryDict.empty
-      , selectFields = {newCardCategorySelect = Nothing}
+      , chooserFields = EveryDict.empty
       , requestFinished = False
       , menuOpen = False
       , categories = []
@@ -51,8 +50,8 @@ currentPage model =
             a
 
 
-getInputValue : Model -> InputField -> String
-getInputValue model inputField =
+getInputValue : InputField -> Model -> String
+getInputValue inputField model =
     case EveryDict.get inputField model.inputFields of
         Nothing ->
             ""
@@ -61,6 +60,21 @@ getInputValue model inputField =
             s
 
 
-setInputValue : Model -> InputField -> String -> Model
-setInputValue model inputField value =
+setInputValue : String -> InputField -> Model -> Model
+setInputValue value inputField model =
     { model | inputFields = EveryDict.insert inputField value model.inputFields }
+
+
+getChooserValue : ChooserField -> Model -> Chooser.Model
+getChooserValue cf model =
+    case EveryDict.get cf model.chooserFields of
+        Nothing ->
+            Chooser.init () |> Chooser.placeholder "Uninitialized" |> Chooser.closeOnSelect True |> Chooser.searchable True
+
+        Just s ->
+            s
+
+
+setChooserValue : ChooserField -> Chooser.Model -> Model -> Model
+setChooserValue field value model =
+    { model | chooserFields = EveryDict.insert field value model.chooserFields }

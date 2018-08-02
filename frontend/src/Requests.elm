@@ -6,6 +6,7 @@ import Json.Encode as Encode
 import Json.Decode as Decode exposing (field, int, string, map)
 import Http
 import Model exposing (..)
+import Types.Msg exposing (..)
 
 
 requestForPageLoad : Maybe Route -> Cmd Msg

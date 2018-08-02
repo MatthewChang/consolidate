@@ -4,10 +4,12 @@ import Model exposing (..)
 import UrlParser as Url exposing ((</>), (<?>), s, int, stringParam, top)
 import Navigation
 import Types exposing (..)
+import Types.Input exposing (..)
 import Bootstrap.Modal as Modal
 import Requests
 import EveryDict
-import Updaters.SelectUpdate exposing (..)
+import Ui.Chooser as Chooser
+import Types.Msg exposing (..)
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -19,18 +21,25 @@ update msg model =
         ToggleMenu ->
             ( { model | menuOpen = not model.menuOpen }, Cmd.none )
 
-        SetSelect value ->
-            ( { model | selectFields = selectUpdate value model.selectFields }, Cmd.none )
-
         SetInput inputType value ->
             ( { model | inputFields = EveryDict.insert inputType value model.inputFields }, Cmd.none )
 
-        --SetSelect select value ->
-            --( { model | inputFields = EveryDict.insert inputType value model.inputFields }, Cmd.none )
+        SetChooser field msg ->
+            let
+                ( newModel, cmd ) =
+                    Chooser.update msg <| getChooserValue field model
+            in
+                ( setChooserValue field newModel model, Cmd.none )
 
         ----requests
         GetCategories (Ok result) ->
-            ( { model | requestFinished = True, categories = result }, Cmd.none )
+            let
+                setNewDropdown =
+                    setChooserValue NewCardCategory <| initNewCardCategoryChooser result
+            in
+                ( setNewDropdown { model | requestFinished = True, categories = result }
+                , Cmd.none
+                )
 
         GetCategories (Err _) ->
             ( model, Cmd.none )

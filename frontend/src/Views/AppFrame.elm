@@ -10,6 +10,9 @@ import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css, href, src)
 import Html.Styled.Events exposing (onClick)
 import Views.Theme exposing (..)
+import Types.Input exposing (..)
+
+import Types.Msg exposing (..)
 
 
 toolbarHeight : Px
@@ -55,9 +58,9 @@ menu model =
                         , marginBottom (px 0)
                         ]
                     ]
-                    [ li [onClick <| NavigateTo RootPage] [ text "Home" ]
-                    , li [onClick <| NavigateTo NewCard] [ text "Add new" ]
-                    , li [onClick <| NavigateTo ViewAll] [ text "View All" ]
+                    [ li [ onClick <| NavigateTo RootPage ] [ text "Home" ]
+                    , li [ onClick <| NavigateTo NewCard ] [ text "Add new" ]
+                    , li [ onClick <| NavigateTo ViewAll ] [ text "View All" ]
                     ]
                 ]
             )

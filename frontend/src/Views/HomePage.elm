@@ -10,6 +10,7 @@ import Html.Styled exposing (..)
 import Html.Styled.Attributes exposing (css, href, src)
 import Html.Styled.Events exposing (onClick)
 import Views.Theme exposing (..)
+import Types.Msg exposing (..)
 
 
 card : Html Msg
