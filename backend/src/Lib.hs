@@ -31,6 +31,7 @@ import           GHC.Generics
 import           Network.HTTP.Types.Status
 import           Safe
 import           Web.Spock                            hiding (head)
+import Servant
 import Text.Regex
 import Union
 import Data.String.Conversions hiding ((<>))
@@ -77,6 +78,11 @@ instance ToJSON (Key a) where
   toJSON = toJSON . unKey
 instance FromJSON (Key a) where
   parseJSON a = Key <$> parseJSON a
+
+instance FromHttpApiData (Key a) where
+    parseUrlPiece = t . parseUrlPiece where
+      t (Right a) = Right $ Key a
+      t (Left a) = Left a
 
 data Record a = Record {key :: Key a, value :: a} deriving (Generic)
 instance (ToJSON a) => ToJSON (Record a) where

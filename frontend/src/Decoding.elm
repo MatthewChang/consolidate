@@ -45,3 +45,12 @@ decodeCategories =
     Decode.list <| Decode.map2 (\id name -> Record (Key id) (Category name))
         (field "id" int)
         (field "name" string)
+
+decodeCards : Decode.Decoder (List (Record Card))
+decodeCards =
+    Decode.list <| Decode.map5 (\id question answer dueAt categoryId -> Record (Key id) (Card question answer dueAt (Key categoryId)))
+        (field "id" int)
+        (field "question" string)
+        (field "answer" string)
+        (field "dueAt" string)
+        (field "categoryId" int)

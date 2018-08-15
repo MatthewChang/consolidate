@@ -6,6 +6,7 @@ import Types exposing (..)
 import Views.HomePage exposing (..)
 import Views.AppFrame exposing (..)
 import Views.NewCardPage exposing (..)
+import Views.ViewAllPage exposing (..)
 import Types.Msg exposing (..)
 
 
@@ -21,9 +22,9 @@ view model =
                     homePage model
 
                 Just ViewAll ->
-                    homePage model
+                    viewAllPage model
 
                 Just NewCard ->
-                    newCardPage model
+                    viewAllPage model
         else
             text "Loading..."

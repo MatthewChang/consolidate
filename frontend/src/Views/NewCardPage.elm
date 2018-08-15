@@ -17,8 +17,8 @@ import Types.KeyOrOtherDropdownOption exposing (..)
 import Ui.Chooser as Chooser
 
 
-textInputBase : Bool -> Model -> InputField -> Html Msg
-textInputBase area model ty =
+textInputBase : Bool -> InputField -> Model -> Html Msg
+textInputBase area ty model =
     let
         label =
             inputLabel ty
@@ -50,38 +50,19 @@ textInputBase area model ty =
             ]
 
 
-textInput : Model -> InputField -> Html Msg
+textInput : InputField -> Model -> Html Msg
 textInput =
     textInputBase False
 
 
-textArea : Model -> InputField -> Html Msg
+textArea : InputField -> Model -> Html Msg
 textArea =
     textInputBase True
 
 
-
---categorySelect : Model -> Html Msg
---categorySelect m =
-----div [] [ textInput m NewCategory ]
---let
---toOption =
---(\e -> option [ value <| toValue <| Existing e.id ] [ text e.value.name ])
---in
---div []
---[ select
---[ value <|
---toValue m.selectFields.newCardCategorySelect
---, onInput <| SetSelect << NewCardCategory
---]
---<|
---List.map toOption m.categories
---]
-
-
 categorySelect : Model -> Html Msg
 categorySelect =
-    fromUnstyled << Html.map (SetChooser NewCardCategory) << Chooser.view << getChooserValue NewCardCategory
+    fromUnstyled << Html.map (SetChooser NewCardCategory) << Chooser.view << getChooserModel NewCardCategory
 
 
 styledButton : String -> Msg -> Html Msg
@@ -99,11 +80,20 @@ styledButton a m =
         [ text a ]
 
 
+otherField : Model -> List (Html Msg)
+otherField model =
+    if getChooserValue NewCardCategory model == Just "other" then
+        [textInput NewCategory model]
+    else
+        []
+
+
 newCardPage : Model -> Html Msg
 newCardPage model =
-    div [ css [ padding <| px 25 ] ]
-        [ textArea model NewCardQuestion
-        , textArea model NewCardAnswer
+    div [ css [ padding <| px 25 ] ] <|
+        [ textArea NewCardQuestion model
+        , textArea NewCardAnswer model
         , categorySelect model
-        , styledButton "Done" SubmitNewCard
         ]
+            ++ otherField model
+            ++ [ styledButton "Done" SubmitNewCard ]

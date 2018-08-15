@@ -32,7 +32,7 @@ import           Data.Pool
 import           Database.PostgreSQL.Simple
 import Network.Wai.Middleware.RequestLogger
 import Control.Monad.Trans.Reader
-{-import SuperRecordExtra-}
+import SuperRecordExtra
 
 
 data HTML
@@ -41,11 +41,17 @@ instance Accept HTML where
 instance MimeRender HTML String where
     mimeRender _ = pack
 
+
+{-note the keys have to be provided in alphabetical order for this to work for some reason-}
+type ShowAllResponse = Rec '["cards" := [Record Card], "categories" := [Record Category]]
+
 type API = "position" :> Capture "x" Int :> Capture "y" Int :> Get '[JSON] Position
       :<|> "hello" :> QueryParam "name" String :> Get '[JSON] HelloMessage
       :<|> "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] (Record Card)
       :<|> "cards" :> Get '[JSON] [Record Card]
+      :<|> "cards" :> Capture "id" (Key Card) :> "correct" :> Post '[JSON] (Record Card)
       :<|> "categories" :> Get '[JSON] [Record Category]
+      :<|> "all" :> Get '[JSON] ShowAllResponse
       :<|> Get '[HTML] String
       :<|> "static" :> Raw
 
@@ -60,12 +66,6 @@ newtype HelloMessage = HelloMessage { msg :: String } deriving Generic
 
 instance ToJSON HelloMessage
 
-{-data NewCardBody = NewCardBody-}
-  {-{ question :: String-}
-  {-, answer :: String-}
-  {-, categoryId :: Maybe Int-}
-  {-, newCategory :: String-}
-  {-} deriving Generic-}
 type NewCardBody = Rec '["question" := Text
                   , "answer" := Text
                   , "categoryId" := Maybe (Key Category)
@@ -89,13 +89,18 @@ connectionPool = createPool
   10
   10
 
+cardsUpdate :: Key Card -> Handler (Record Card)
+cardsUpdate = undefined
+
 server3 :: Pool Connection -> Server API
 server3 pool =
   position
     :<|> hello
     :<|> card
     :<|> cards
+    :<|> cardsUpdate
     :<|> categories
+    :<|> showAll
     :<|> home
     :<|> serveDirectoryWebApp "static/static"
  where
@@ -108,10 +113,15 @@ server3 pool =
     Just n  -> "Hello, " ++ n
 
   cards :: Handler [Record Card]
-  cards = liftIO . withResource pool $ getAll' 
+  cards = liftIO . withResource pool $ getAll'
 
   categories :: Handler [Record Category]
-  categories = liftIO . withResource pool $ getAll' 
+  categories = liftIO . withResource pool $ getAll'
+
+  showAll :: Handler ShowAllResponse
+  showAll = liftIO . withResource pool $ \conn -> do
+    let f a b = #cards := a &! #categories := b
+    liftM2 f (getAll' conn) (getAll' conn)
 
   card :: NewCardBody -> Handler (Record Card)
   card b = liftIO . withResource pool $ \conn -> do
@@ -130,9 +140,6 @@ server3 pool =
     {-time <- liftIO getCurrentTime-}
     {-let due = addUTCTime 15 time-}
     {-ReaderT $ insertElement (Card (get #question b) (get #answer b) time due cid)-}
-
-  {-card2 :: NewCardBody -> ReaderT Connection IO Int -}
-  {-card2 b = reader (\c -> 0)-}
 
   home = liftIO $ do
     handle <- openFile "static/index.html" ReadMode

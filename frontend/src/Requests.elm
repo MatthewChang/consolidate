@@ -7,6 +7,7 @@ import Json.Decode as Decode exposing (field, int, string, map)
 import Http
 import Model exposing (..)
 import Types.Msg exposing (..)
+import Requests.GetAll exposing (..)
 
 
 requestForPageLoad : Maybe Route -> Cmd Msg
@@ -21,7 +22,7 @@ requestForPageLoad maybeRoute =
                     getHome
 
                 ViewAll ->
-                    getHome
+                    getAll
 
                 NewCard ->
                     getCategories
@@ -49,6 +50,7 @@ submitNewCard model =
             Http.post url (Http.jsonBody (newCardEncoder model)) decodeHome
     in
         Http.send SubmitNewCardRequest request
+
 
 getCategories : Cmd Msg
 getCategories =

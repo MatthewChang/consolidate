@@ -3,6 +3,7 @@ module Types exposing (..)
 import UrlParser as Url exposing ((</>))
 import Navigation
 
+
 type Key a
     = Key Int
 
@@ -23,8 +24,9 @@ type alias Record a =
 type alias Card =
     { question : String
     , answer : String
-    , lastCorrectAt : Float
-    , waitDuration : Float
+
+    --change to datetime
+    , dueAt : String
     , categoryId : Key Category
     }
 
@@ -32,7 +34,10 @@ type alias Card =
 type alias Category =
     { name : String }
 
+
+
 --routes stuff
+
 
 type Route
     = RootPage

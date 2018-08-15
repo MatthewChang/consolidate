@@ -21,13 +21,26 @@ update msg model =
         ToggleMenu ->
             ( { model | menuOpen = not model.menuOpen }, Cmd.none )
 
+        PushAlert options ->
+            (  {model | alerts = options :: model.alerts }, Cmd.none )
+
+        PopAlert ->
+            (  {model | alerts = List.drop 1 model.alerts }, Cmd.none )
+
+        FlipCard key ->
+            let
+                val =
+                    getFlipped model key
+            in
+                ( { model | flippedCards = EveryDict.insert key (not val) model.flippedCards }, Cmd.none )
+
         SetInput inputType value ->
             ( { model | inputFields = EveryDict.insert inputType value model.inputFields }, Cmd.none )
 
         SetChooser field msg ->
             let
                 ( newModel, cmd ) =
-                    Chooser.update msg <| getChooserValue field model
+                    Chooser.update msg <| getChooserModel field model
             in
                 ( setChooserValue field newModel model, Cmd.none )
 
@@ -49,6 +62,18 @@ update msg model =
 
         SubmitNewCardRequest (Err _) ->
             ( model, Cmd.none )
+
+        FetchAllPage (Ok ( cats, cards )) ->
+            ( { model
+                | requestFinished = True
+                , categories = cats
+                , cards = cards
+              }
+            , Cmd.none
+            )
+
+        FetchAllPage (Result.Err _) ->
+            ( { model | requestFinished = True }, Cmd.none )
 
         FetchHomePage (Ok result) ->
             ( { model | requestFinished = True }, Cmd.none )

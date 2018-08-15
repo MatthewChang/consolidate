@@ -26,7 +26,7 @@ inputLabel a =
             "New Card Answer"
 
         NewCategory ->
-            "Other"
+            "New Category Name"
 
 
 categoryToItem : Record Category -> Chooser.Item
@@ -44,6 +44,6 @@ initNewCardCategoryChooser res =
             (List.map categoryToItem res)
 
         options =
-            catOptions ++ [{ label = "Other", value = "other", id = "other" }]
+            catOptions ++ [ { label = "Other", value = "other", id = "other" } ]
     in
         Chooser.init () |> Chooser.updateData options |> Chooser.placeholder "Choose a category"
