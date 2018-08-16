@@ -29,31 +29,48 @@ decodeHome : Decode.Decoder Int
 decodeHome =
     int
 
+
 decodeKey : Decode.Decoder (Key a)
-decodeKey = Decode.map Key int
+decodeKey =
+    Decode.map Key int
 
 
 newCardEncoder : Model -> Encode.Value
 newCardEncoder model =
-    Encode.object
-        [ ( "question", Encode.string <| getInputValue NewCardQuestion model )
-        , ( "answer", Encode.string <| getInputValue NewCardAnswer model )
-        , ( "categoryId", maybe Encode.int <| Nothing )
-        , ( "newCategory", Encode.string <| getInputValue NewCategory model )
-        ]
+    let
+        encode =
+            \x ->
+                case x of
+                    Nothing ->
+                        Nothing
+
+                    Just s ->
+                        Result.toMaybe <| String.toInt s
+    in
+        Encode.object
+            [ ( "question", Encode.string <| getInputValue NewCardQuestion model )
+            , ( "answer", Encode.string <| getInputValue NewCardAnswer model )
+            , ( "categoryId"
+              , maybe Encode.int <| encode <| getChooserValue NewCardCategory model
+              )
+            , ( "newCategory", Encode.string <| getInputValue NewCategory model )
+            ]
 
 
 decodeCategories : Decode.Decoder (List (Record Category))
 decodeCategories =
-    Decode.list <| Decode.map2 (\id name -> Record (Key id) (Category name))
-        (field "id" int)
-        (field "name" string)
+    Decode.list <|
+        Decode.map2 (\id name -> Record (Key id) (Category name))
+            (field "id" int)
+            (field "name" string)
+
 
 decodeCards : Decode.Decoder (List (Record Card))
 decodeCards =
-    Decode.list <| Decode.map5 (\id question answer dueAt categoryId -> Record (Key id) (Card question answer dueAt (Key categoryId)))
-        (field "id" int)
-        (field "question" string)
-        (field "answer" string)
-        (field "dueAt" string)
-        (field "categoryId" int)
+    Decode.list <|
+        Decode.map5 (\id question answer dueAt categoryId -> Record (Key id) (Card question answer dueAt (Key categoryId)))
+            (field "id" int)
+            (field "question" string)
+            (field "answer" string)
+            (field "dueAt" string)
+            (field "categoryId" int)
