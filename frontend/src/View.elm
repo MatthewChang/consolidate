@@ -25,6 +25,6 @@ view model =
                     viewAllPage model
 
                 Just NewCard ->
-                    viewAllPage model
+                    newCardPage model
         else
             text "Loading..."

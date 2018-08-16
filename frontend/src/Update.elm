@@ -12,6 +12,11 @@ import Ui.Chooser as Chooser
 import Types.Msg exposing (..)
 
 
+popAlert : Model -> Model
+popAlert model =
+    { model | alerts = List.drop 1 model.alerts }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
@@ -22,10 +27,10 @@ update msg model =
             ( { model | menuOpen = not model.menuOpen }, Cmd.none )
 
         PushAlert options ->
-            (  {model | alerts = options :: model.alerts }, Cmd.none )
+            ( { model | alerts = options :: model.alerts }, Cmd.none )
 
         PopAlert ->
-            (  {model | alerts = List.drop 1 model.alerts }, Cmd.none )
+            ( popAlert model, Cmd.none )
 
         FlipCard key ->
             let
@@ -33,6 +38,9 @@ update msg model =
                     getFlipped model key
             in
                 ( { model | flippedCards = EveryDict.insert key (not val) model.flippedCards }, Cmd.none )
+
+        DeleteCard key ->
+            ( { model | alerts = List.drop 1 model.alerts }, Requests.deleteCard key )
 
         SetInput inputType value ->
             ( { model | inputFields = EveryDict.insert inputType value model.inputFields }, Cmd.none )
@@ -80,6 +88,12 @@ update msg model =
 
         FetchHomePage (Result.Err _) ->
             ( { model | requestFinished = True }, Cmd.none )
+
+        DeleteCardResponse (Ok result) ->
+            ( popAlert <| { model | cards = List.filter (\x -> x.id /= result) model.cards }, Cmd.none )
+
+        DeleteCardResponse (Result.Err _) ->
+            ( model, Cmd.none )
 
         ------------routing handling
         NavigateTo route ->

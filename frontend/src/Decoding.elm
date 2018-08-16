@@ -29,6 +29,9 @@ decodeHome : Decode.Decoder Int
 decodeHome =
     int
 
+decodeKey : Decode.Decoder (Key a)
+decodeKey = Decode.map Key int
+
 
 newCardEncoder : Model -> Encode.Value
 newCardEncoder model =

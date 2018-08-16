@@ -50,6 +50,7 @@ type API = "position" :> Capture "x" Int :> Capture "y" Int :> Get '[JSON] Posit
       :<|> "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] (Record Card)
       :<|> "cards" :> Get '[JSON] [Record Card]
       :<|> "cards" :> Capture "id" (Key Card) :> "correct" :> Post '[JSON] (Record Card)
+      :<|> "cards" :> Capture "id" (Key Card) :> Delete '[JSON] (Key Card)
       :<|> "categories" :> Get '[JSON] [Record Category]
       :<|> "all" :> Get '[JSON] ShowAllResponse
       :<|> Get '[HTML] String
@@ -99,6 +100,7 @@ server3 pool =
     :<|> card
     :<|> cards
     :<|> cardsUpdate
+    :<|> cardDelete
     :<|> categories
     :<|> showAll
     :<|> home
@@ -132,16 +134,10 @@ server3 pool =
     let due = addUTCTime 15 time
     insertElement (Card (get #question b) (get #answer b) time due cid) conn
 
-  {-card2 :: NewCardBody -> ReaderT Connection IO (Record Card)-}
-  {-card2 b = do-}
-    {-cid <- case get #categoryId b of-}
-      {-Just i  -> pure i-}
-      {-Nothing -> key <$> (ReaderT $ insertElement (Category $ get #newCategory b))-}
-    {-time <- liftIO getCurrentTime-}
-    {-let due = addUTCTime 15 time-}
-    {-ReaderT $ insertElement (Card (get #question b) (get #answer b) time due cid)-}
+  cardDelete :: Key Card -> Handler (Key Card)
+  cardDelete = fmap Key . liftIO . withResource pool . deleteElement
 
-  home = liftIO $ do
+  home       = liftIO $ do
     handle <- openFile "static/index.html" ReadMode
     hGetContents handle
 

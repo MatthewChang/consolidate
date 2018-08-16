@@ -114,7 +114,7 @@ alert contents =
 
         viewModel =
             { contents = List.map toUnstyled [ text "Are you sure?" ]
-            , footer = [ Button.render PopAlert closeButton, Button.render PopAlert okButton ]
+            , footer = [ Button.render PopAlert closeButton, Button.render contents.onConfirm okButton ]
             , address = \x -> PopAlert
             , title = "are you sure?"
             }

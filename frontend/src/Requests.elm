@@ -8,6 +8,7 @@ import Http
 import Model exposing (..)
 import Types.Msg exposing (..)
 import Requests.GetAll exposing (..)
+import HttpBuilder exposing (..)
 
 
 requestForPageLoad : Maybe Route -> Cmd Msg
@@ -50,6 +51,13 @@ submitNewCard model =
             Http.post url (Http.jsonBody (newCardEncoder model)) decodeHome
     in
         Http.send SubmitNewCardRequest request
+
+
+deleteCard : Key Card -> Cmd Msg
+deleteCard key =
+    delete ("/cards/" ++ toString (unKey key))
+        |> withExpectJson int
+        |> send (DeleteCardResponse << Result.map (\x -> key))
 
 
 getCategories : Cmd Msg

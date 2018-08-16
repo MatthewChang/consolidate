@@ -18,13 +18,15 @@ type Msg
     | FlipCard (Key Card)
     | PushAlert AlertDialogContents
     | PopAlert
+    | DeleteCard (Key Card)
+    | SubmitNewCard
     | SetInput InputField String
     | SetChooser ChooserField Chooser.Msg
     | FetchHomePage (Result Http.Error Int)
     | FetchAllPage (Result Http.Error ShowAllResponse)
     | SubmitNewCardRequest (Result Http.Error Int)
     | GetCategories (Result Http.Error (List (Record Category)))
-    | SubmitNewCard
+    | DeleteCardResponse (Result Http.Error (Key Card))
 
 type alias AlertDialogContents =
     { message : String, onConfirm : Msg }

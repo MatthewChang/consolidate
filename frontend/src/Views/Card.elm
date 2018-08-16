@@ -21,7 +21,7 @@ backView card =
     div []
         [ span [] [ text card.value.answer ]
         , button
-            [ onClickNoPropagation <| PushAlert { message = "Are you sure", onConfirm = PopAlert }
+            [ onClickNoPropagation <| PushAlert { message = "Are you sure", onConfirm = DeleteCard card.id }
             , css [ float right ]
             ]
             [ text "x" ]
