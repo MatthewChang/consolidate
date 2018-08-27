@@ -15,7 +15,7 @@ import Prelude ()
 import Prelude.Compat
 
 import Control.Monad.Except
-import Data.Aeson.Compat
+import Data.Aeson.Compat hiding (value)
 import Data.ByteString.Lazy.Char8 (pack)
 import GHC.Generics
 import Network.HTTP.Media ((//), (/:))
@@ -23,6 +23,7 @@ import           Data.Text (Text)
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Servant
+import Servant.Server
 import System.IO
 import Tables
 import Lib
@@ -51,6 +52,7 @@ type API = "position" :> Capture "x" Int :> Capture "y" Int :> Get '[JSON] Posit
       :<|> "cards" :> Get '[JSON] [Record Card]
       :<|> "cards" :> Capture "id" (Key Card) :> "correct" :> Post '[JSON] (Record Card)
       :<|> "cards" :> Capture "id" (Key Card) :> Delete '[JSON] (Key Card)
+      :<|> "cards" :> Capture "id" (Key Card) :> ReqBody '[JSON] NewCardBody :> Put '[JSON] (Record Card)
       :<|> "categories" :> Get '[JSON] [Record Category]
       :<|> "all" :> Get '[JSON] ShowAllResponse
       :<|> Get '[HTML] String
@@ -90,8 +92,29 @@ connectionPool = createPool
   10
   10
 
-cardsUpdate :: Key Card -> Handler (Record Card)
-cardsUpdate = undefined
+cardsCorrect :: Key Card -> Handler (Record Card)
+cardsCorrect = undefined
+
+cardEdit :: Key Card -> NewCardBody -> Connection -> Handler (Record Card)
+cardEdit key body conn = do
+  card <- value <$> find404 key conn
+  let q = get #question body
+      a = get #answer body
+  cid <- liftIO $ newOrExistingCategoryId body conn
+  let updatedCard = card { question = q, answer = a, categoryId = cid }
+  undefined
+
+find404 :: (Table a, FromRow a) => Key a -> Connection -> Handler (Record a)
+find404 key conn = do
+  mRec <- liftIO $ findConnection key conn
+  case mRec of
+    Just i  -> pure i
+    Nothing -> throwError err404
+
+newOrExistingCategoryId :: NewCardBody -> Connection -> IO (Key Category)
+newOrExistingCategoryId body conn = case get #categoryId body of
+  Just i  -> pure i
+  Nothing -> key <$> insertElement (Category $ get #newCategory body) conn
 
 server3 :: Pool Connection -> Server API
 server3 pool =
@@ -99,8 +122,9 @@ server3 pool =
     :<|> hello
     :<|> card
     :<|> cards
-    :<|> cardsUpdate
+    :<|> cardsCorrect
     :<|> cardDelete
+    :<|> edit
     :<|> categories
     :<|> showAll
     :<|> home
@@ -108,6 +132,9 @@ server3 pool =
  where
   position :: Int -> Int -> Handler Position
   position x y = return (Position x y)
+
+  edit :: Key Card -> NewCardBody -> Handler (Record Card)
+  edit key body =  withResource pool $ \conn -> cardEdit key body conn
 
   hello :: Maybe String -> Handler HelloMessage
   hello mname = return . HelloMessage $ case mname of

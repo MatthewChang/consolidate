@@ -187,26 +187,35 @@ find
   => Key a
   -> m (Maybe (Record a))
 find k = runQuery $ findQuery tableName k
+
+findConnection
+  :: (Table a, FromRow a) => Key a -> Connection -> IO (Maybe (Record a))
+findConnection k = findQuery tableName k
+
 findQuery
   :: (FromRow a) => TableName a -> Key a -> Connection -> IO (Maybe (Record a))
 findQuery (TableName n) (Key k) conn =
   headMay <$> query conn "select * from ? where id = ?;" (n, k)
 
-find404
-  :: ( Table a
-     , FromRow a
-     , SpockConn (ActionCtxT ctx m) ~ Connection
-     , Monad m
-     , HasSpock m
-     , HasSpock (ActionCtxT ctx m)
-     , MonadIO m
-     )
-  => Key a
-  -> ActionCtxT ctx m (Record a)
-find404 a = do
-  rec <- Lib.find a
-  val <- guardNotFound rec
-  return val
+updateElement :: (Table a) => Key a -> a -> Connection -> IO (Maybe (Record a))
+updateElement key record conn =
+  let (ConstructedQuery q e) = updateQuery tableName valueList key record
+  in  headMay <$> query conn q e
+
+
+
+--find404 :: ( Table a
+     --, FromRow a
+     --, SpockConn (ActionCtxT ctx m) ~ Connection
+     --, Monad m
+     --, HasSpock m
+     --, HasSpock (ActionCtxT ctx m)
+     --, MonadIO m
+     --) => Key a -> ActionCtxT ctx m (Record a)
+--find404 a = do
+  --rec <- Lib.find a
+  --val <- guardNotFound rec
+  --return val
 
 getAll
   :: (Table a, FromRow a, HasSpock m, SpockConn m ~ Connection)
@@ -254,6 +263,21 @@ insertQuery (TableName n) values a =
         ++ ") returning *;"
         )
         ([toField n] ++ (toRow values) ++ (toRow a))
+
+updateQuery
+  :: (Table a) => TableName a -> ValueList a -> Key a -> a -> ConstructedQuery a
+updateQuery (TableName n) (ValueList values) k record =
+  let paramString = intercalate "," $ replicate (length values) "?"
+  in  ConstructedQuery
+        (  fromString
+        $  "update ? set ("
+        ++ paramString
+        ++ ") = ("
+        ++ paramString
+        ++ ") where id = ?;"
+        )
+        ([toField n] ++ (toRow values) ++ (toRow record) ++ [toField k])
+
 
 {-with added debugging-}
 executeInsertQuery

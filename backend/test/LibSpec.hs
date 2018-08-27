@@ -32,6 +32,18 @@ spec = do
               {-$ "insert into songtags(songid,tagid) values (?,?) returning *;"-}
       {-(insertQuery tableName insertValueList)-}
         {-`shouldBe` (expected :: ConstructedQuery SongTag)-}
+  describe "Update query" $ do
+    it "builds a reasonable query" $ do
+      let expected =
+            ConstructedQuery "update ? set (?) = (?) where id = ?;"
+              $ [ toField $ Identifier "songs"
+                , toField ("name" :: String)
+                , toField ("test" :: String)
+                , toField (1 :: Int)
+                ]
+      (updateQuery tableName insertValueList (Key 1) $ Song "test")
+        `shouldBe` (expected)
+
 
   describe "insertValueList" $ do
     it "does not return the primary key by default" $ do
@@ -56,9 +68,10 @@ spec = do
       constructedQuery "? >= ?" (8 :: Int, 8 :: Int) `shouldBe` result3
 
     it "works with columns" $ do
-      let result =
-            buildConstraintQuery (songIdC =. (Key 8 :: Key Song)) :: ConstructedQuery
-                (Record Song :. Record SongTag :. Record Tag)
+      let
+        result =
+          buildConstraintQuery (songIdC =. (Key 8 :: Key Song)) :: ConstructedQuery
+              (Record Song :. Record SongTag :. Record Tag)
 
       constructedQuery
           "? = ?"
@@ -83,7 +96,8 @@ spec = do
     it "builds full query" $ do
       let
         result =
-          build (And (songIdC =. (Key 8 :: Key Song)) (songTagSongIdC =. songIdC)) :: ConstructedQuery
+          build
+            (And (songIdC =. (Key 8 :: Key Song)) (songTagSongIdC =. songIdC)) :: ConstructedQuery
               (Record Song :. Record SongTag :. Record Tag)
       result
         `shouldBe` (ConstructedQuery
