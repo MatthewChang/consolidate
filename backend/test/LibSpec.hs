@@ -29,7 +29,7 @@ spec = do
       let expected =
             ConstructedQuery "update ? set (?) = (?) where id = ?;"
               $ [ toField $ Identifier "songs"
-                , toField ("name" :: String)
+                , toField (Identifier "name")
                 , toField ("test" :: String)
                 , toField (1 :: Int)
                 ]

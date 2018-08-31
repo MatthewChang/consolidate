@@ -27,7 +27,7 @@ setCategories c m =
         newModel =
             setChooserModel SelectedCardCategory newChooserModel m
     in
-        log <| { newModel | categories = c }
+        { newModel | categories = c }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )

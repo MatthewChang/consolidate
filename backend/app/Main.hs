@@ -75,7 +75,6 @@ type NewCardBody = Rec '["question" := Text
                   , "categoryId" := Maybe (Key Category)
                   , "newCategory" := Text]
 
-
 data Email = Email
   { from :: String
   , to :: String

@@ -90,11 +90,7 @@ getCard (Key id) =
 
 saveCard : NewCardForm -> Key Card -> Cmd Msg
 saveCard newCardForm key =
-    let
-        body =
-            Encode.object [ ( "id", encodeKey key ), ( "value", encodeNewCardForm newCardForm ) ]
-    in
-        put ("/cards/" ++ toString (unKey key))
-            |> withExpectJson decodeCard
-            |> withJsonBody body
-            |> send (DeleteCardResponse << Result.map (\x -> key))
+    put ("/cards/" ++ toString (unKey key))
+        |> withExpectJson decodeCard
+        |> withJsonBody (encodeNewCardForm newCardForm)
+        |> send (DeleteCardResponse << Result.map (\x -> key))

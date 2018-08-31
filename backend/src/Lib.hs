@@ -193,11 +193,10 @@ findQuery (TableName n) (Key k) conn =
   headMay <$> query conn "select * from ? where id = ?;" (n, k)
 
 updateElement :: (Table a) => Key a -> a -> Connection -> IO (Record a)
-updateElement key record conn =
-  let (ConstructedQuery q e) = updateQuery tableName valueList key record
-  in  head <$> query conn q e
-
-
+updateElement key record conn = do
+  let (ConstructedQuery q e) = updateQuery tableName insertValueList key record
+  res <- execute conn q e
+  if res == 1 then pure $ Record key record else error "bad update"
 
 --find404 :: ( Table a
      --, FromRow a
@@ -258,8 +257,9 @@ insertQuery (TableName n) values a =
 
 updateQuery
   :: (Table a) => TableName a -> ValueList a -> Key a -> a -> ConstructedQuery a
-updateQuery (TableName n) (ValueList values) k record =
-  let paramString = intercalate "," $ replicate (length values) "?"
+updateQuery (TableName n) values k record =
+  let paramString =
+        intercalate "," $ replicate (length $ fromValueList values) "?"
   in  ConstructedQuery
         (  fromString
         $  "update ? set ("
