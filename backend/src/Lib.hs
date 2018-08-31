@@ -197,10 +197,10 @@ findQuery
 findQuery (TableName n) (Key k) conn =
   headMay <$> query conn "select * from ? where id = ?;" (n, k)
 
-updateElement :: (Table a) => Key a -> a -> Connection -> IO (Maybe (Record a))
+updateElement :: (Table a) => Key a -> a -> Connection -> IO (Record a)
 updateElement key record conn =
   let (ConstructedQuery q e) = updateQuery tableName valueList key record
-  in  headMay <$> query conn q e
+  in  head <$> query conn q e
 
 
 

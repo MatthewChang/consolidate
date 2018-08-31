@@ -17,6 +17,11 @@ import Types.KeyOrOtherDropdownOption exposing (..)
 import Ui.Chooser as Chooser
 
 
+type EditMode
+    = Edit
+    | NoEdit
+
+
 textInputBase : Bool -> InputField -> Model -> Html Msg
 textInputBase area ty model =
     let
@@ -62,7 +67,7 @@ textArea =
 
 categorySelect : Model -> Html Msg
 categorySelect =
-    fromUnstyled << Html.map (SetChooser NewCardCategory) << Chooser.view << getChooserModel NewCardCategory
+    fromUnstyled << Html.map (SetChooser SelectedCardCategory) << Chooser.view << getChooserModel SelectedCardCategory
 
 
 styledButton : String -> Msg -> Html Msg
@@ -82,18 +87,27 @@ styledButton a m =
 
 otherField : Model -> List (Html Msg)
 otherField model =
-    if getChooserValue NewCardCategory model == Just "other" then
-        [textInput NewCategory model]
+    if getChooserValue SelectedCardCategory model == Just "other" then
+        [ textInput CategoryOtherInput model ]
     else
         []
 
 
-newCardPage : Model -> Html Msg
-newCardPage model =
-    div [ css [ padding <| px 25 ] ] <|
-        [ textArea NewCardQuestion model
-        , textArea NewCardAnswer model
-        , categorySelect model
-        ]
-            ++ otherField model
-            ++ [ styledButton "Done" SubmitNewCard ]
+newCardPage : EditMode -> Model -> Html Msg
+newCardPage editMode model =
+    let
+        saveMethod =
+            case editMode of
+                Edit ->
+                    SaveCard
+
+                NoEdit ->
+                    SubmitNewCard
+    in
+        div [ css [ padding <| px 25 ] ] <|
+            [ textArea CardQuestion model
+            , textArea CardAnswer model
+            , categorySelect model
+            ]
+                ++ otherField model
+                ++ [ styledButton "Done" saveMethod ]

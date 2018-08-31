@@ -1,6 +1,7 @@
 module Requests exposing (..)
 
 import Decoding exposing (..)
+import Encoding exposing (..)
 import Types exposing (..)
 import Json.Encode as Encode
 import Json.Decode as Decode exposing (field, int, string, map)
@@ -27,6 +28,9 @@ requestForPageLoad maybeRoute =
 
                 NewCard ->
                     getCategories
+
+                EditPage id ->
+                    getCard id
 
 
 getHome : Cmd Msg
@@ -70,3 +74,27 @@ getCategories =
             Http.get url decodeCategories
     in
         Http.send GetCategories request
+
+
+getCard : Key Card -> Cmd Msg
+getCard (Key id) =
+    let
+        url =
+            "/cards/" ++ toString id
+
+        request =
+            Http.get url <| Decode.map2 (,) (field "card" decodeCard) (field "categories" decodeCategories)
+    in
+        Http.send GetCardResponse request
+
+
+saveCard : NewCardForm -> Key Card -> Cmd Msg
+saveCard newCardForm key =
+    let
+        body =
+            Encode.object [ ( "id", encodeKey key ), ( "value", encodeNewCardForm newCardForm ) ]
+    in
+        put ("/cards/" ++ toString (unKey key))
+            |> withExpectJson decodeCard
+            |> withJsonBody body
+            |> send (DeleteCardResponse << Result.map (\x -> key))

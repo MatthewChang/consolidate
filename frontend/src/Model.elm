@@ -26,8 +26,17 @@ type alias Model =
     , menuOpen : Bool
     , categories : List (Record Category)
     , cards : List (Record Card)
+    , editingCard : Maybe (Record Card)
     , flippedCards : EveryDict.EveryDict (Key Card) Bool
     , alerts : List AlertDialogContents
+    }
+
+
+type alias NewCardForm =
+    { question : String
+    , answer : String
+    , categoryId : Maybe (Key Category)
+    , newCategory : String
     }
 
 
@@ -40,6 +49,7 @@ initialState location =
       , menuOpen = False
       , categories = []
       , cards = []
+      , editingCard = Nothing
       , flippedCards = EveryDict.empty
       , alerts = []
       }
@@ -91,8 +101,8 @@ getChooserValue cf =
         selected << getChooserModel cf
 
 
-setChooserValue : ChooserField -> Chooser.Model -> Model -> Model
-setChooserValue field value model =
+setChooserModel : ChooserField -> Chooser.Model -> Model -> Model
+setChooserModel field value model =
     { model | chooserFields = EveryDict.insert field value model.chooserFields }
 
 
@@ -109,3 +119,29 @@ getFlipped model id =
 
         Just a ->
             a
+
+--should move to helper
+liftMaybe : Maybe (Maybe a) -> Maybe a
+liftMaybe a =
+    case a of
+        Nothing ->
+            Nothing
+
+        Just Nothing ->
+            Nothing
+
+        Just (Just x) ->
+            Just x
+
+
+getNewCardForm : Model -> NewCardForm
+getNewCardForm model =
+    let
+        cid =
+            Maybe.map Key <| liftMaybe <| Maybe.map (Result.toMaybe << String.toInt) <| getChooserValue SelectedCardCategory model
+    in
+        { question = getInputValue CardQuestion model
+        , answer = getInputValue CardAnswer model
+        , categoryId = cid
+        , newCategory = getInputValue CategoryOtherInput model
+        }

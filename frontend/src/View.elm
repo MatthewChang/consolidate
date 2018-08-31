@@ -25,6 +25,9 @@ view model =
                     viewAllPage model
 
                 Just NewCard ->
-                    newCardPage model
+                    newCardPage NoEdit model
+
+                Just (EditPage id) ->
+                    newCardPage Edit model
         else
             text "Loading..."

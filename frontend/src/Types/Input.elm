@@ -6,26 +6,26 @@ import Ui.Chooser as Chooser
 
 
 type InputField
-    = NewCardQuestion
-    | NewCardAnswer
-    | NewCategory
+    = CardQuestion
+    | CardAnswer
+    | CategoryOtherInput
 
 
 type ChooserField
-    = NewCardCategory
+    = SelectedCardCategory
     | FilterByCategory
 
 
 inputLabel : InputField -> String
 inputLabel a =
     case a of
-        NewCardQuestion ->
+        CardQuestion ->
             "New Card Question"
 
-        NewCardAnswer ->
+        CardAnswer ->
             "New Card Answer"
 
-        NewCategory ->
+        CategoryOtherInput ->
             "New Category Name"
 
 
@@ -38,12 +38,17 @@ categoryToItem c =
 
 
 initNewCardCategoryChooser : List (Record Category) -> Chooser.Model
-initNewCardCategoryChooser res =
+initNewCardCategoryChooser list =
+        Chooser.init () |> Chooser.placeholder "Choose a category" |> updateCategoryChooserOptions list
+
+
+updateCategoryChooserOptions : List (Record Category) -> Chooser.Model -> Chooser.Model
+updateCategoryChooserOptions list model =
     let
         catOptions =
-            (List.map categoryToItem res)
+            (List.map categoryToItem list)
 
         options =
             catOptions ++ [ { label = "Other", value = "other", id = "other" } ]
     in
-        Chooser.init () |> Chooser.updateData options |> Chooser.placeholder "Choose a category"
+        model |> Chooser.updateData options

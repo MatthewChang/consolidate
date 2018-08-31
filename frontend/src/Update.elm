@@ -17,11 +17,35 @@ popAlert model =
     { model | alerts = List.drop 1 model.alerts }
 
 
+setCategories : List (Record Category) -> Model -> Model
+setCategories c m =
+    let
+        newChooserModel =
+            getChooserModel SelectedCardCategory m |> updateCategoryChooserOptions c
+
+        newModel =
+            setChooserModel SelectedCardCategory newChooserModel m
+    in
+        { newModel | categories = c }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         SubmitNewCard ->
             ( model, Requests.submitNewCard model )
+
+        SaveCard ->
+            let
+                cmd =
+                    case model.editingCard of
+                        Nothing ->
+                            Cmd.none
+
+                        Just card ->
+                            Requests.saveCard (getNewCardForm model) card.id
+            in
+                ( model, cmd )
 
         ToggleMenu ->
             ( { model | menuOpen = not model.menuOpen }, Cmd.none )
@@ -50,13 +74,13 @@ update msg model =
                 ( newModel, cmd ) =
                     Chooser.update msg <| getChooserModel field model
             in
-                ( setChooserValue field newModel model, Cmd.none )
+                ( setChooserModel field newModel model, Cmd.none )
 
         ----requests
         GetCategories (Ok result) ->
             let
                 setNewDropdown =
-                    setChooserValue NewCardCategory <| initNewCardCategoryChooser result
+                    setChooserModel SelectedCardCategory <| initNewCardCategoryChooser result
             in
                 ( setNewDropdown { model | requestFinished = True, categories = result }
                 , Cmd.none
@@ -93,6 +117,31 @@ update msg model =
             ( popAlert <| { model | cards = List.filter (\x -> x.id /= result) model.cards }, Cmd.none )
 
         DeleteCardResponse (Result.Err _) ->
+            ( model, Cmd.none )
+
+        GetCardResponse (Ok ( card, categories )) ->
+            let
+                newFields =
+                    [ ( card.value.question, CardQuestion ), ( card.value.answer, CardAnswer ) ]
+
+                newModel =
+                    List.foldl (uncurry setInputValue) model newFields
+
+                cm =
+                    getChooserModel SelectedCardCategory model
+
+                setcm =
+                    setChooserModel SelectedCardCategory (Chooser.setValue (toString card.value.categoryId) cm)
+            in
+                ( setcm <| setCategories categories <| { newModel | editingCard = Just card, requestFinished = True }, Cmd.none )
+
+        GetCardResponse (Result.Err _) ->
+            ( model, Cmd.none )
+
+        SaveCardResponse (Ok card) ->
+            ( model, Cmd.none )
+
+        SaveCardResponse (Result.Err _) ->
             ( model, Cmd.none )
 
         ------------routing handling

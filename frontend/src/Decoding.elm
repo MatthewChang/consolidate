@@ -35,28 +35,6 @@ decodeKey =
     Decode.map Key int
 
 
-newCardEncoder : Model -> Encode.Value
-newCardEncoder model =
-    let
-        encode =
-            \x ->
-                case x of
-                    Nothing ->
-                        Nothing
-
-                    Just s ->
-                        Result.toMaybe <| String.toInt s
-    in
-        Encode.object
-            [ ( "question", Encode.string <| getInputValue NewCardQuestion model )
-            , ( "answer", Encode.string <| getInputValue NewCardAnswer model )
-            , ( "categoryId"
-              , maybe Encode.int <| encode <| getChooserValue NewCardCategory model
-              )
-            , ( "newCategory", Encode.string <| getInputValue NewCategory model )
-            ]
-
-
 decodeCategories : Decode.Decoder (List (Record Category))
 decodeCategories =
     Decode.list <|
@@ -65,12 +43,16 @@ decodeCategories =
             (field "name" string)
 
 
+decodeCard : Decode.Decoder (Record Card)
+decodeCard =
+    Decode.map5 (\id question answer dueAt categoryId -> Record (Key id) (Card question answer dueAt (Key categoryId)))
+        (field "id" int)
+        (field "question" string)
+        (field "answer" string)
+        (field "dueAt" string)
+        (field "categoryId" int)
+
+
 decodeCards : Decode.Decoder (List (Record Card))
 decodeCards =
-    Decode.list <|
-        Decode.map5 (\id question answer dueAt categoryId -> Record (Key id) (Card question answer dueAt (Key categoryId)))
-            (field "id" int)
-            (field "question" string)
-            (field "answer" string)
-            (field "dueAt" string)
-            (field "categoryId" int)
+    Decode.list <| decodeCard

@@ -23,7 +23,6 @@ import           Data.Text (Text)
 import Network.Wai
 import Network.Wai.Handler.Warp
 import Servant
-import Servant.Server
 import System.IO
 import Tables
 import Lib
@@ -50,6 +49,7 @@ type API = "position" :> Capture "x" Int :> Capture "y" Int :> Get '[JSON] Posit
       :<|> "hello" :> QueryParam "name" String :> Get '[JSON] HelloMessage
       :<|> "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] (Record Card)
       :<|> "cards" :> Get '[JSON] [Record Card]
+      :<|> "cards" :> Capture "id" (Key Card) :> Get '[JSON] (Record Card)
       :<|> "cards" :> Capture "id" (Key Card) :> "correct" :> Post '[JSON] (Record Card)
       :<|> "cards" :> Capture "id" (Key Card) :> Delete '[JSON] (Key Card)
       :<|> "cards" :> Capture "id" (Key Card) :> ReqBody '[JSON] NewCardBody :> Put '[JSON] (Record Card)
@@ -96,25 +96,25 @@ cardsCorrect :: Key Card -> Handler (Record Card)
 cardsCorrect = undefined
 
 cardEdit :: Key Card -> NewCardBody -> Connection -> Handler (Record Card)
-cardEdit key body conn = do
-  card <- value <$> find404 key conn
-  let q = get #question body
-      a = get #answer body
-  cid <- liftIO $ newOrExistingCategoryId body conn
+cardEdit k b conn = do
+  card <- value <$> find404 k conn
+  let q = get #question b
+      a = get #answer b
+  cid <- liftIO $ newOrExistingCategoryId b conn
   let updatedCard = card { question = q, answer = a, categoryId = cid }
-  undefined
+  liftIO $ updateElement k updatedCard conn
 
 find404 :: (Table a, FromRow a) => Key a -> Connection -> Handler (Record a)
-find404 key conn = do
-  mRec <- liftIO $ findConnection key conn
+find404 k conn = do
+  mRec <- liftIO $ findConnection k conn
   case mRec of
     Just i  -> pure i
     Nothing -> throwError err404
 
 newOrExistingCategoryId :: NewCardBody -> Connection -> IO (Key Category)
-newOrExistingCategoryId body conn = case get #categoryId body of
+newOrExistingCategoryId b conn = case get #categoryId b of
   Just i  -> pure i
-  Nothing -> key <$> insertElement (Category $ get #newCategory body) conn
+  Nothing -> key <$> insertElement (Category $ get #newCategory b) conn
 
 server3 :: Pool Connection -> Server API
 server3 pool =
@@ -122,6 +122,7 @@ server3 pool =
     :<|> hello
     :<|> card
     :<|> cards
+    :<|> showCard
     :<|> cardsCorrect
     :<|> cardDelete
     :<|> edit
@@ -134,7 +135,7 @@ server3 pool =
   position x y = return (Position x y)
 
   edit :: Key Card -> NewCardBody -> Handler (Record Card)
-  edit key body =  withResource pool $ \conn -> cardEdit key body conn
+  edit k b = withResource pool $ \conn -> cardEdit k b conn
 
   hello :: Maybe String -> Handler HelloMessage
   hello mname = return . HelloMessage $ case mname of
@@ -143,6 +144,9 @@ server3 pool =
 
   cards :: Handler [Record Card]
   cards = liftIO . withResource pool $ getAll'
+
+  showCard :: Key Card -> Handler (Record Card)
+  showCard k = withResource pool $ find404 k
 
   categories :: Handler [Record Category]
   categories = liftIO . withResource pool $ getAll'

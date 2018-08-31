@@ -24,14 +24,6 @@ spec = do
       (insertQuery tableName insertValueList $ Song "test")
         `shouldBe` (expected)
 
-
-    {-it "builds a reasonable query" $ do-}
-      {-let expected =-}
-            {-ConstructedQuery-}
-              {-. fromString-}
-              {-$ "insert into songtags(songid,tagid) values (?,?) returning *;"-}
-      {-(insertQuery tableName insertValueList)-}
-        {-`shouldBe` (expected :: ConstructedQuery SongTag)-}
   describe "Update query" $ do
     it "builds a reasonable query" $ do
       let expected =
