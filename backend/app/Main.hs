@@ -44,12 +44,13 @@ instance MimeRender HTML String where
 
 {-note the keys have to be provided in alphabetical order for this to work for some reason-}
 type ShowAllResponse = Rec '["cards" := [Record Card], "categories" := [Record Category]]
+type GetCardResponse = Rec '["card" := Record Card, "categories" := [Record Category]]
 
 type API = "position" :> Capture "x" Int :> Capture "y" Int :> Get '[JSON] Position
       :<|> "hello" :> QueryParam "name" String :> Get '[JSON] HelloMessage
       :<|> "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] (Record Card)
       :<|> "cards" :> Get '[JSON] [Record Card]
-      :<|> "cards" :> Capture "id" (Key Card) :> Get '[JSON] (Record Card)
+      :<|> "cards" :> Capture "id" (Key Card) :> Get '[JSON] GetCardResponse
       :<|> "cards" :> Capture "id" (Key Card) :> "correct" :> Post '[JSON] (Record Card)
       :<|> "cards" :> Capture "id" (Key Card) :> Delete '[JSON] (Key Card)
       :<|> "cards" :> Capture "id" (Key Card) :> ReqBody '[JSON] NewCardBody :> Put '[JSON] (Record Card)
@@ -143,18 +144,21 @@ server3 pool =
     Just n  -> "Hello, " ++ n
 
   cards :: Handler [Record Card]
-  cards = liftIO . withResource pool $ getAll'
+  cards = liftIO . withResource pool $ getAll
 
-  showCard :: Key Card -> Handler (Record Card)
-  showCard k = withResource pool $ find404 k
+  showCard :: Key Card -> Handler GetCardResponse
+  showCard k = withResource pool $ \conn -> do 
+    c <- find404 k conn
+    cats <- liftIO $ getAll conn
+    pure $ #card := c &! #categories := cats
 
   categories :: Handler [Record Category]
-  categories = liftIO . withResource pool $ getAll'
+  categories = liftIO . withResource pool $ getAll
 
   showAll :: Handler ShowAllResponse
   showAll = liftIO . withResource pool $ \conn -> do
     let f a b = #cards := a &! #categories := b
-    liftM2 f (getAll' conn) (getAll' conn)
+    liftM2 f (getAll conn) (getAll conn)
 
   card :: NewCardBody -> Handler (Record Card)
   card b = liftIO . withResource pool $ \conn -> do

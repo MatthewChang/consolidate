@@ -39,7 +39,20 @@ categoryToItem c =
 
 initNewCardCategoryChooser : List (Record Category) -> Chooser.Model
 initNewCardCategoryChooser list =
-        Chooser.init () |> Chooser.placeholder "Choose a category" |> updateCategoryChooserOptions list
+    Chooser.init () |> Chooser.placeholder "Choose a category" |> updateCategoryChooserOptions list
+
+
+initChooser : ChooserField -> Chooser.Model
+initChooser field =
+    case field of
+        SelectedCardCategory ->
+            Chooser.init ()
+                |> Chooser.placeholder "Choose a category"
+                |> Chooser.closeOnSelect True
+                |> Chooser.searchable True
+
+        FilterByCategory ->
+            Chooser.init ()
 
 
 updateCategoryChooserOptions : List (Record Category) -> Chooser.Model -> Chooser.Model

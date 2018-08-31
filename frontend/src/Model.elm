@@ -84,12 +84,7 @@ setInputValue value inputField model =
 
 getChooserModel : ChooserField -> Model -> Chooser.Model
 getChooserModel cf model =
-    case EveryDict.get cf model.chooserFields of
-        Nothing ->
-            Chooser.init () |> Chooser.placeholder "Uninitialized" |> Chooser.closeOnSelect True |> Chooser.searchable True
-
-        Just s ->
-            s
+    Maybe.withDefault (initChooser cf) <| EveryDict.get cf model.chooserFields
 
 
 getChooserValue : ChooserField -> Model -> Maybe String
@@ -120,7 +115,11 @@ getFlipped model id =
         Just a ->
             a
 
+
+
 --should move to helper
+
+
 liftMaybe : Maybe (Maybe a) -> Maybe a
 liftMaybe a =
     case a of

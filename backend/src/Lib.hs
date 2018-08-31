@@ -30,7 +30,6 @@ import Database.PostgreSQL.Simple.Types
 import           GHC.Generics
 import           Network.HTTP.Types.Status
 import           Safe
-import           Web.Spock                            hiding (head)
 import Servant
 import Text.Regex
 import Union
@@ -175,18 +174,14 @@ build constraints =
     <> ConstructedQuery " where " []
     <> (toQuery constraints)
 
-executeQuery
-  :: (FromRow a, HasSpock m, SpockConn m ~ Connection)
-  => ConstructedQuery a
-  -> m [a]
-executeQuery q = runQuery $ \conn -> query conn qs qv
-  where ConstructedQuery qs qv = q
+--executeQuery :: (FromRow a, HasSpock m, SpockConn m ~ Connection) => ConstructedQuery a -> m [a]
+--executeQuery q = runQuery $ \conn -> query conn qs qv
+  --where ConstructedQuery qs qv = q
 
-find
-  :: (Table a, FromRow a, HasSpock m, SpockConn m ~ Connection)
-  => Key a
-  -> m (Maybe (Record a))
-find k = runQuery $ findQuery tableName k
+runQuery :: (FromRow a) => ConstructedQuery a -> Connection -> IO [a]
+runQuery (ConstructedQuery q r) c = query c q r
+
+--find :: (Table a, FromRow a, HasSpock m, SpockConn m ~ Connection) => Key a -> m (Maybe (Record a)) find k = runQuery $ findQuery tableName k
 
 findConnection
   :: (Table a, FromRow a) => Key a -> Connection -> IO (Maybe (Record a))
@@ -217,13 +212,11 @@ updateElement key record conn =
   --val <- guardNotFound rec
   --return val
 
-getAll
-  :: (Table a, FromRow a, HasSpock m, SpockConn m ~ Connection)
-  => m ([Record a])
-getAll = runQuery $ getFromTable tableName
+--getAll :: (Table a, FromRow a, HasSpock m, SpockConn m ~ Connection) => m ([Record a])
+--getAll = runQuery $ getFromTable tableName
 
-getAll' :: (Table a, FromRow a) => Connection -> IO [Record a]
-getAll' = getFromTable tableName
+getAll :: (Table a, FromRow a) => Connection -> IO [Record a]
+getAll = getFromTable tableName
 
 {-we need the second layer of function here to make the type inference find the-}
 {-right "tableName function in getAll"-}
@@ -231,9 +224,8 @@ getFromTable :: (FromRow a) => TableName a -> Connection -> IO ([Record a])
 getFromTable (TableName n) conn = query conn "select * from ?;" (Only n)
 
 {-Generic insert logic-}
-insertRecord
-  :: (Table a, HasSpock m, SpockConn m ~ Connection) => a -> m (Record a)
-insertRecord = runQuery . insertElement
+--insertRecord :: (Table a, HasSpock m, SpockConn m ~ Connection) => a -> m (Record a)
+--insertRecord = runQuery . insertElement
 
 insertElement
   :: (Table a, ToRow a, FromRow a) => a -> Connection -> IO (Record a)
@@ -286,9 +278,8 @@ executeInsertQuery (ConstructedQuery q e) conn =
   head <$> query conn (trace (show q) q) (trace (show e) e)
 
 {-Generic delete logic-}
-deleteRecord
-  :: (Table a, HasSpock m, SpockConn m ~ Connection) => Key a -> m (Int64)
-deleteRecord = runQuery . deleteElement
+--deleteRecord :: (Table a, HasSpock m, SpockConn m ~ Connection) => Key a -> m (Int64)
+--deleteRecord = runQuery . deleteElement
 
 deleteElement :: (Table a) => Key a -> Connection -> IO (Int64)
 deleteElement k = executeDeleteQuery (deleteQuery tableName k)
@@ -300,8 +291,8 @@ deleteQuery (TableName n) k =
 executeDeleteQuery :: ConstructedQuery a -> Connection -> IO (Int64)
 executeDeleteQuery (ConstructedQuery q vars) conn = execute conn q vars
 
-guardNotFound :: MonadIO m => Maybe (Record a) -> ActionCtxT ctx m (Record a)
-guardNotFound Nothing = do
-  setStatus status404
-  text "Not found"
-guardNotFound (Just a) = return a
+--guardNotFound :: MonadIO m => Maybe (Record a) -> ActionCtxT ctx m (Record a)
+--guardNotFound Nothing = do
+  --setStatus status404
+  --text "Not found"
+--guardNotFound (Just a) = return a

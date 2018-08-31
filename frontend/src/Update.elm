@@ -10,6 +10,7 @@ import Requests
 import EveryDict
 import Ui.Chooser as Chooser
 import Types.Msg exposing (..)
+import Utility exposing (..)
 
 
 popAlert : Model -> Model
@@ -21,12 +22,12 @@ setCategories : List (Record Category) -> Model -> Model
 setCategories c m =
     let
         newChooserModel =
-            getChooserModel SelectedCardCategory m |> updateCategoryChooserOptions c
+            updateCategoryChooserOptions c <| getChooserModel SelectedCardCategory m
 
         newModel =
             setChooserModel SelectedCardCategory newChooserModel m
     in
-        { newModel | categories = c }
+        log <| { newModel | categories = c }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -128,12 +129,12 @@ update msg model =
                     List.foldl (uncurry setInputValue) model newFields
 
                 cm =
-                    getChooserModel SelectedCardCategory model
+                    getChooserModel SelectedCardCategory newModel
 
                 setcm =
-                    setChooserModel SelectedCardCategory (Chooser.setValue (toString card.value.categoryId) cm)
+                    setChooserModel SelectedCardCategory (Chooser.setValue (toString <| unKey <| card.value.categoryId) cm)
             in
-                ( setcm <| setCategories categories <| { newModel | editingCard = Just card, requestFinished = True }, Cmd.none )
+                ( setCategories categories <| setcm <| { newModel | editingCard = Just card, requestFinished = True }, Cmd.none )
 
         GetCardResponse (Result.Err _) ->
             ( model, Cmd.none )
