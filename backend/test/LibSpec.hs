@@ -88,9 +88,7 @@ spec = do
     it "builds full query" $ do
       let
         result =
-          build
-            (And (songIdC =. (Key 8 :: Key Song)) (songTagSongIdC =. songIdC)) :: ConstructedQuery
-              (Record Song :. Record SongTag :. Record Tag)
+          build (And (songIdC =. (Key 8 :: Key Song)) (songTagSongIdC =. songIdC)) :: ConstructedQuery (Record Song :. Record SongTag :. Record Tag)
       result
         `shouldBe` (ConstructedQuery
                      "select * from ?, ?, ? where ? = ? and ? = ?"
@@ -113,5 +111,22 @@ spec = do
                        , Plain "."
                        , EscapeIdentifier "id"
                        ]
+                     ]
+                   )
+
+    it "builds full query with 1 table" $ do
+      let
+        result =
+          build (songIdC =. (Key 8 :: Key Song)) :: ConstructedQuery (Record Song)
+      result
+        `shouldBe` (ConstructedQuery
+                     "select * from ? where ? = ?"
+                     [ EscapeIdentifier "songs"
+                     , Many
+                       [ EscapeIdentifier "songs"
+                       , Plain "."
+                       , EscapeIdentifier "id"
+                       ]
+                     , Plain "8"
                      ]
                    )

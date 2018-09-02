@@ -46,10 +46,9 @@ instance MimeRender HTML String where
 type ShowAllResponse = Rec '["cards" := [Record Card], "categories" := [Record Category]]
 type GetCardResponse = Rec '["card" := Record Card, "categories" := [Record Category]]
 
-type API = "position" :> Capture "x" Int :> Capture "y" Int :> Get '[JSON] Position
-      :<|> "hello" :> QueryParam "name" String :> Get '[JSON] HelloMessage
-      :<|> "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] (Record Card)
+type API =  "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] (Record Card)
       :<|> "cards" :> Get '[JSON] [Record Card]
+      :<|> "cards" :> "ready" :> Get '[JSON] ShowAllResponse
       :<|> "cards" :> Capture "id" (Key Card) :> Get '[JSON] GetCardResponse
       :<|> "cards" :> Capture "id" (Key Card) :> "correct" :> Post '[JSON] (Record Card)
       :<|> "cards" :> Capture "id" (Key Card) :> Delete '[JSON] (Key Card)
@@ -118,10 +117,9 @@ newOrExistingCategoryId b conn = case get #categoryId b of
 
 server3 :: Pool Connection -> Server API
 server3 pool =
-  position
-    :<|> hello
-    :<|> card
+  card
     :<|> cards
+    :<|> ready
     :<|> showCard
     :<|> cardsCorrect
     :<|> cardDelete
@@ -131,23 +129,22 @@ server3 pool =
     :<|> home
     :<|> serveDirectoryWebApp "static/static"
  where
-  position :: Int -> Int -> Handler Position
-  position x y = return (Position x y)
-
   edit :: Key Card -> NewCardBody -> Handler (Record Card)
   edit k b = withResource pool $ \conn -> cardEdit k b conn
 
-  hello :: Maybe String -> Handler HelloMessage
-  hello mname = return . HelloMessage $ case mname of
-    Nothing -> "Hello, anonymous coward"
-    Just n  -> "Hello, " ++ n
+  ready :: Handler ShowAllResponse
+  ready = liftIO . withResource pool $ \conn -> do
+    time       <-  getCurrentTime
+    cards      <- (runQuery . build1 $ time >=. cardDueAtC) conn
+    categories <-  getAll conn
+    return $ #cards := cards &! #categories := categories
 
   cards :: Handler [Record Card]
   cards = liftIO . withResource pool $ getAll
 
   showCard :: Key Card -> Handler GetCardResponse
-  showCard k = withResource pool $ \conn -> do 
-    c <- find404 k conn
+  showCard k = withResource pool $ \conn -> do
+    c    <- find404 k conn
     cats <- liftIO $ getAll conn
     pure $ #card := c &! #categories := cats
 

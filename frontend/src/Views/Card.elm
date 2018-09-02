@@ -16,16 +16,26 @@ onClickNoPropagation =
     onWithOptions "click" { preventDefault = True, stopPropagation = True } << Decode.succeed
 
 
-backView : Record Card -> Html Msg
-backView card =
-    div []
-        [ span [] [ text card.value.answer ]
-        , button
-            [ onClickNoPropagation <| PushAlert { message = "Are you sure", onConfirm = DeleteCard card.id }
-            , css [ float right ]
-            ]
-            [ text "x" ]
-        ]
+backView : Bool -> Record Card -> Html Msg
+backView b card =
+    let
+        buttons =
+            if b then
+                [ button
+                    [ onClickNoPropagation <| PushAlert { message = "Are you sure", onConfirm = DeleteCard card.id }
+                    , css [ float right ]
+                    ]
+                    [ text "x" ]
+                , button
+                    [ onClickNoPropagation <| NavigateTo <| EditPage card.id
+                    , css [ float right, marginLeft <| px 7 ]
+                    ]
+                    [ text "edit" ]
+                ]
+            else
+                []
+    in
+        div [] ([ span [] [ text card.value.answer ] ] ++ buttons)
 
 
 frontView : Model -> Record Card -> Html Msg
@@ -50,11 +60,11 @@ frontView model card =
 
 
 card : Bool -> Model -> Record Card -> Html Msg
-card deletable model card =
+card buttons model card =
     let
         cardView =
             if getFlipped model card.id then
-                backView card
+                backView buttons card
             else
                 frontView model card
     in

@@ -9,6 +9,8 @@
 {-# LANGUAGE TypeOperators            #-}
 {-# LANGUAGE ScopedTypeVariables      #-}
 {-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 
 
 module Lib where
@@ -97,10 +99,10 @@ type family ConstraintTable a where
   ConstraintTable (Column tb ty) = tb
   ConstraintTable a = a
 
-{-function for the constraint to use for the given types-}
-{-for columns we check that they are in the give tables-}
-{-anthing else just has to have to field defined-}
-{-this allows us to use new types without needing -}
+--function for the constraint to use for the given types
+--for columns we check that they are in the give tables
+--anthing else just has to have to field defined
+--this allows us to use new types without needing 
 type family ConstraintFor a u where
   ConstraintFor (Column tb ty) u = Setable tb u
   ConstraintFor a _ = ToField a
@@ -158,6 +160,9 @@ queryHeader
 queryHeader (a, b, c) =
   ConstructedQuery "select * from ?, ?, ?" $ [toField a, toField b, toField c]
 
+queryHeader1 :: (TableName a) -> ConstructedQuery (Record a)
+queryHeader1 (a) = ConstructedQuery "select * from ?" $ [toField a]
+
 
 buildConstraintQuery
   :: (Table a, Table b, Table c)
@@ -165,14 +170,23 @@ buildConstraintQuery
   -> ConstructedQuery (Record a :. Record b :. Record c)
 buildConstraintQuery = toQuery
 
-build
-  :: (Table a, Table b, Table c)
-  => Constraint (a + b + c)
-  -> ConstructedQuery (Record a :. Record b :. Record c)
-build constraints =
-  queryHeader (tableName, tableName, tableName)
-    <> ConstructedQuery " where " []
-    <> (toQuery constraints)
+class Buildable a b | b -> a where
+  build :: Constraint a -> ConstructedQuery b
+
+instance (Table a, Table b, Table c) => Buildable (a + b + c) (Record a :. Record b :. Record c) where
+  build constraints = queryHeader (tableName, tableName, tableName)
+      <> ConstructedQuery " where " []
+      <> (toQuery constraints)
+
+--build :: (Table a, Table b, Table c) => Constraint (a + b + c) -> ConstructedQuery (Record a :. Record b :. Record c)
+--build constraints =
+  --queryHeader (tableName, tableName, tableName) <> ConstructedQuery " where " [] <> (toQuery constraints)
+
+instance (Table a) => Buildable a (Record a) where
+  build constraints =
+    queryHeader1 tableName
+      <> ConstructedQuery " where " []
+      <> (toQuery constraints)
 
 --executeQuery :: (FromRow a, HasSpock m, SpockConn m ~ Connection) => ConstructedQuery a -> m [a]
 --executeQuery q = runQuery $ \conn -> query conn qs qv

@@ -21,16 +21,6 @@ testFunction (x : xs) = (a', b')
     Nothing  -> (a, b)
 testFunction [] = ([], [])
 
-{-testTypeclass :: (Num b) => [a + b] -> ([a], [b])-}
-{-testTypeclass (x : xs) = (a', b')-}
- {-where-}
-  {-(a, b)   = testFunction xs-}
-  {-mi       = (get x)-}
-  {-(a', b') = case mi of-}
-    {-Just val -> (a, val + 1 : b)-}
-    {-Nothing  -> (a, b)-}
-{-testFunction [] = ([], [])-}
-
 spec :: Spec
 spec = do
   describe "Generic Union" $ do
@@ -80,3 +70,7 @@ spec = do
     it "should not allow typecheck retrieval for unions not containing the type"
       $ do
           shouldNotTypecheck (get (Left "string" :: Either Int Char))
+
+    it "should work with non union types" $ do
+      get (set (5 :: Int) :: Int) `shouldBe` Just (5 :: Int)
+      (set (5 :: Int) :: Int) `shouldBe` (5 :: Int)

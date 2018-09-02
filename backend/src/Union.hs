@@ -60,6 +60,12 @@ instance (SetSwitch i u ~ flag, Setable' flag i u) => Setable i u where
   set = set' (undefined :: flag)
   get = get' (undefined :: flag)
 
+--needed this instance for the case when building with one table and had a union of only one element maybe I could
+--work around so that case doesn't use the setable typeclass but this works
+instance Setable' flag i i where
+  set' _ a = a
+  get' _ a = Just a
+
 instance Setable' HLeafLeft i (Either i a) where
   set' _ = Left
   get' _ (Left i) = Just i
