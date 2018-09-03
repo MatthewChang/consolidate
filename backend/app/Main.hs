@@ -51,6 +51,7 @@ type API =  "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] (Record Card)
       :<|> "cards" :> "ready" :> Get '[JSON] ShowAllResponse
       :<|> "cards" :> Capture "id" (Key Card) :> Get '[JSON] GetCardResponse
       :<|> "cards" :> Capture "id" (Key Card) :> "correct" :> Post '[JSON] (Record Card)
+      :<|> "cards" :> Capture "id" (Key Card) :> "wrong" :> Post '[JSON] (Record Card)
       :<|> "cards" :> Capture "id" (Key Card) :> Delete '[JSON] (Key Card)
       :<|> "cards" :> Capture "id" (Key Card) :> ReqBody '[JSON] NewCardBody :> Put '[JSON] (Record Card)
       :<|> "categories" :> Get '[JSON] [Record Category]
@@ -91,8 +92,6 @@ connectionPool = createPool
   10
   10
 
-cardsCorrect :: Key Card -> Handler (Record Card)
-cardsCorrect = undefined
 
 cardEdit :: Key Card -> NewCardBody -> Connection -> Handler (Record Card)
 cardEdit k b conn = do
@@ -121,7 +120,8 @@ server3 pool =
     :<|> cards
     :<|> ready
     :<|> showCard
-    :<|> cardsCorrect
+    :<|> cardsCorrectWrong True
+    :<|> cardsCorrectWrong False
     :<|> cardDelete
     :<|> edit
     :<|> categories
@@ -147,6 +147,20 @@ server3 pool =
     c    <- find404 k conn
     cats <- liftIO $ getAll conn
     pure $ #card := c &! #categories := cats
+
+  cardsCorrectWrong :: Bool -> Key Card -> Handler (Record Card)
+  cardsCorrectWrong res k = withResource pool $ \conn -> do
+    c    <- find404 k conn
+    time <- liftIO getCurrentTime
+    let inter = if res
+          then 2 * (diffUTCTime time $ lastCorrectAt $ value c)
+          else (diffUTCTime (dueAt $ value c) (lastCorrectAt $ value c)) / 2
+        nextTime    = addUTCTime inter time
+        updatedCard = (value c) { lastCorrectAt = time, dueAt = nextTime }
+    liftIO $ updateElement k updatedCard conn
+
+
+
 
   categories :: Handler [Record Category]
   categories = liftIO . withResource pool $ getAll
