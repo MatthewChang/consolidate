@@ -134,10 +134,10 @@ server3 pool =
 
   ready :: Handler ShowAllResponse
   ready = liftIO . withResource pool $ \conn -> do
-    time       <-  getCurrentTime
-    cards      <- (runQuery . build1 $ time >=. cardDueAtC) conn
-    categories <-  getAll conn
-    return $ #cards := cards &! #categories := categories
+    time <- getCurrentTime
+    cs   <- (runQuery . build $ time >=. cardDueAtC) conn
+    cats <- getAll conn
+    return $ #cards := cs &! #categories := cats
 
   cards :: Handler [Record Card]
   cards = liftIO . withResource pool $ getAll

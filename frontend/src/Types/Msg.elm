@@ -26,7 +26,9 @@ type Msg
     | SaveCard
     | SetInput InputField String
     | SetChooser ChooserField Chooser.Msg
-    | FetchHomePage (Result Http.Error Int)
+    | MarkCardAs Bool
+    | GetReadyCardsResponse (Result Http.Error ( Maybe (Record Card), List (Record Category) ))
+    | MarkCardResponse (Result Http.Error ( Maybe (Record Card), List (Record Category) ))
     | FetchAllPage (Result Http.Error ShowAllResponse)
     | SubmitNewCardRequest (Result Http.Error Int)
     | GetCategories (Result Http.Error (List (Record Category)))

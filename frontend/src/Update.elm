@@ -57,6 +57,9 @@ update msg model =
         PopAlert ->
             ( popAlert model, Cmd.none )
 
+        MarkCardAs bool ->
+          (model,Requests.markCardAs model bool)
+
         FlipCard key ->
             let
                 val =
@@ -108,11 +111,17 @@ update msg model =
         FetchAllPage (Result.Err _) ->
             ( { model | requestFinished = True }, Cmd.none )
 
-        FetchHomePage (Ok result) ->
+        GetReadyCardsResponse (Ok ( card, categories )) ->
+            ( { model | requestFinished = True, categories = categories, readyCard = card }, Cmd.none )
+
+        GetReadyCardsResponse (Result.Err _) ->
             ( { model | requestFinished = True }, Cmd.none )
 
-        FetchHomePage (Result.Err _) ->
-            ( { model | requestFinished = True }, Cmd.none )
+        MarkCardResponse (Ok ( card, categories )) ->
+            ( { model | categories = categories, readyCard = card }, Cmd.none )
+
+        MarkCardResponse (Result.Err _) ->
+            (  model , Cmd.none )
 
         DeleteCardResponse (Ok result) ->
             ( popAlert <| { model | cards = List.filter (\x -> x.id /= result) model.cards }, Cmd.none )

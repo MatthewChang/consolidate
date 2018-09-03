@@ -2,7 +2,7 @@ module Decoding exposing (..)
 
 import Json.Decode as Decode exposing (field, int, string)
 import Json.Encode as Encode
-import Json.Encode.Extra exposing (maybe)
+import Json.Decode.Extra exposing (optionalField)
 import Types exposing (..)
 import Types.Input exposing (..)
 import Model exposing (..)
@@ -25,9 +25,14 @@ decodeJoins id1 id2 =
 --(field "songTags" <| decodeSongTags)
 
 
-decodeHome : Decode.Decoder Int
-decodeHome =
-    int
+decodeReadyCard : Decode.Decoder ( Maybe (Record Card), List (Record Category) )
+decodeReadyCard =
+    Decode.map2 (,) (optionalField "card" decodeCard) (field "categories" decodeCategories)
+
+
+decodeCardAndCategories : Decode.Decoder ( Record Card, List (Record Category) )
+decodeCardAndCategories =
+    Decode.map2 (,) (field "card" decodeCard) (field "categories" decodeCategories)
 
 
 decodeKey : Decode.Decoder (Key a)

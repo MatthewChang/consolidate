@@ -26,6 +26,7 @@ type alias Model =
     , menuOpen : Bool
     , categories : List (Record Category)
     , cards : List (Record Card)
+    , readyCard :  Maybe (Record Card)
     , editingCard : Maybe (Record Card)
     , flippedCards : EveryDict.EveryDict (Key Card) Bool
     , alerts : List AlertDialogContents
@@ -49,6 +50,7 @@ initialState location =
       , menuOpen = False
       , categories = []
       , cards = []
+      , readyCard = Nothing
       , editingCard = Nothing
       , flippedCards = EveryDict.empty
       , alerts = []

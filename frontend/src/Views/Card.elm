@@ -35,7 +35,23 @@ backView b card =
             else
                 []
     in
-        div [] ([ span [] [ text card.value.answer ] ] ++ buttons)
+        div []
+            ([ span [] [ text card.value.answer ] ]
+                ++ buttons
+                ++ [ div [ css [ marginTop <| px 14 ] ]
+                        [ button
+                            [ onClickNoPropagation <| MarkCardAs True
+                            ]
+                            [ text "Right" ]
+                        , button
+                            [ onClickNoPropagation <|
+                                MarkCardAs False
+                            , css [ marginLeft <| px 20 ]
+                            ]
+                            [ text "Wrong" ]
+                        ]
+                   ]
+            )
 
 
 frontView : Model -> Record Card -> Html Msg
@@ -54,7 +70,7 @@ frontView model card =
     in
         div []
             [ span [] [ text card.value.question ]
-            , span [ css [ float right, color theme.accent ] ]
+            , span [ css [ marginLeft <| px 12, float right, color theme.accent ] ]
                 [ text categoryName ]
             ]
 

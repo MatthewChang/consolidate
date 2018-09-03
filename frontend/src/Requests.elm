@@ -12,6 +12,7 @@ import Requests.GetAll exposing (..)
 import HttpBuilder exposing (..)
 
 
+
 requestForPageLoad : Maybe Route -> Cmd Msg
 requestForPageLoad maybeRoute =
     case maybeRoute of
@@ -37,12 +38,12 @@ getHome : Cmd Msg
 getHome =
     let
         url =
-            "/home"
+            "/cards/ready"
 
         request =
-            Http.get url decodeHome
+            Http.get url <| decodeReadyCard
     in
-        Http.send FetchHomePage request
+        Http.send GetReadyCardsResponse request
 
 
 submitNewCard : Model -> Cmd Msg
@@ -52,7 +53,7 @@ submitNewCard model =
             "/cards"
 
         request =
-            Http.post url (Http.jsonBody (newCardEncoder model)) decodeHome
+            Http.post url (Http.jsonBody (newCardEncoder model)) int
     in
         Http.send SubmitNewCardRequest request
 
@@ -83,7 +84,7 @@ getCard (Key id) =
             "/cards/" ++ toString id
 
         request =
-            Http.get url <| Decode.map2 (,) (field "card" decodeCard) (field "categories" decodeCategories)
+            Http.get url <| decodeCardAndCategories
     in
         Http.send GetCardResponse request
 
@@ -94,3 +95,23 @@ saveCard newCardForm key =
         |> withExpectJson decodeCard
         |> withJsonBody (encodeNewCardForm newCardForm)
         |> send (DeleteCardResponse << Result.map (\x -> key))
+
+
+markCardAs : Model -> Bool -> Cmd Msg
+markCardAs model bool =
+    case model.readyCard of
+        Nothing ->
+            Cmd.none
+
+        Just card ->
+            let
+                res =
+                    if bool then
+                        "/correct"
+                    else
+                        "/wrong"
+            in
+                    post
+                    ("/cards/" ++ toString (unKey card.id) ++ res)
+                    |> withExpectJson decodeReadyCard
+                    |> send (MarkCardResponse)
