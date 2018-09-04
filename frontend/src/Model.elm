@@ -26,7 +26,7 @@ type alias Model =
     , menuOpen : Bool
     , categories : List (Record Category)
     , cards : List (Record Card)
-    , readyCard :  Maybe (Record Card)
+    , readyCard : Maybe (Record Card)
     , editingCard : Maybe (Record Card)
     , flippedCards : EveryDict.EveryDict (Key Card) Bool
     , alerts : List AlertDialogContents
@@ -101,6 +101,15 @@ getChooserValue cf =
 setChooserModel : ChooserField -> Chooser.Model -> Model -> Model
 setChooserModel field value model =
     { model | chooserFields = EveryDict.insert field value model.chooserFields }
+
+
+setChooserValue : ChooserField -> String -> Model -> Model
+setChooserValue field value model =
+    let
+        cm =
+            getChooserModel field model
+    in
+        setChooserModel field (Chooser.setValue value cm) model
 
 
 getCategory : Model -> Record Card -> Maybe (Record Category)

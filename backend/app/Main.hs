@@ -15,9 +15,8 @@ import Prelude ()
 import Prelude.Compat
 
 import Control.Monad.Except
-import Data.Aeson.Compat hiding (value)
 import Data.ByteString.Lazy.Char8 (pack)
-import GHC.Generics
+--import GHC.Generics
 import Network.HTTP.Media ((//), (/:))
 import           Data.Text (Text)
 import Network.Wai
@@ -33,6 +32,7 @@ import           Database.PostgreSQL.Simple
 import Network.Wai.Middleware.RequestLogger
 import Control.Monad.Trans.Reader
 import SuperRecordExtra
+import Safe
 
 
 data HTML
@@ -41,17 +41,17 @@ instance Accept HTML where
 instance MimeRender HTML String where
     mimeRender _ = pack
 
-
 {-note the keys have to be provided in alphabetical order for this to work for some reason-}
 type ShowAllResponse = Rec '["cards" := [Record Card], "categories" := [Record Category]]
 type GetCardResponse = Rec '["card" := Record Card, "categories" := [Record Category]]
+type ReadyCardResponse = Rec '["card" := Maybe (Record Card), "categories" := [Record Category]]
 
-type API =  "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] (Record Card)
+type API =  "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] [Record Category]
       :<|> "cards" :> Get '[JSON] [Record Card]
-      :<|> "cards" :> "ready" :> Get '[JSON] ShowAllResponse
+      :<|> "cards" :> "ready" :> Get '[JSON] ReadyCardResponse
       :<|> "cards" :> Capture "id" (Key Card) :> Get '[JSON] GetCardResponse
-      :<|> "cards" :> Capture "id" (Key Card) :> "correct" :> Post '[JSON] (Record Card)
-      :<|> "cards" :> Capture "id" (Key Card) :> "wrong" :> Post '[JSON] (Record Card)
+      :<|> "cards" :> Capture "id" (Key Card) :> "correct" :> Post '[JSON] ReadyCardResponse
+      :<|> "cards" :> Capture "id" (Key Card) :> "wrong" :> Post '[JSON] ReadyCardResponse
       :<|> "cards" :> Capture "id" (Key Card) :> Delete '[JSON] (Key Card)
       :<|> "cards" :> Capture "id" (Key Card) :> ReqBody '[JSON] NewCardBody :> Put '[JSON] (Record Card)
       :<|> "categories" :> Get '[JSON] [Record Category]
@@ -59,30 +59,10 @@ type API =  "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] (Record Card)
       :<|> Get '[HTML] String
       :<|> "static" :> Raw
 
-data Position = Position
-  { xCoord :: Int
-  , yCoord :: Int
-  } deriving Generic
-
-instance ToJSON Position
-
-newtype HelloMessage = HelloMessage { msg :: String } deriving Generic
-
-instance ToJSON HelloMessage
-
 type NewCardBody = Rec '["question" := Text
                   , "answer" := Text
                   , "categoryId" := Maybe (Key Category)
                   , "newCategory" := Text]
-
-data Email = Email
-  { from :: String
-  , to :: String
-  , subject :: String
-  , body :: String
-  } deriving Generic
-
-instance ToJSON Email
 
 connectionPool :: IO (Pool Connection)
 connectionPool = createPool
@@ -132,12 +112,12 @@ server3 pool =
   edit :: Key Card -> NewCardBody -> Handler (Record Card)
   edit k b = withResource pool $ \conn -> cardEdit k b conn
 
-  ready :: Handler ShowAllResponse
+  ready :: Handler ReadyCardResponse
   ready = liftIO . withResource pool $ \conn -> do
     time <- getCurrentTime
     cs   <- (runQuery . build $ time >=. cardDueAtC) conn
     cats <- getAll conn
-    return $ #cards := cs &! #categories := cats
+    return $ #card := (headMay cs) &! #categories := cats
 
   cards :: Handler [Record Card]
   cards = liftIO . withResource pool $ getAll
@@ -148,19 +128,17 @@ server3 pool =
     cats <- liftIO $ getAll conn
     pure $ #card := c &! #categories := cats
 
-  cardsCorrectWrong :: Bool -> Key Card -> Handler (Record Card)
+  cardsCorrectWrong :: Bool -> Key Card -> Handler ReadyCardResponse
   cardsCorrectWrong res k = withResource pool $ \conn -> do
     c    <- find404 k conn
     time <- liftIO getCurrentTime
     let inter = if res
-          then 2 * (diffUTCTime time $ lastCorrectAt $ value c)
-          else (diffUTCTime (dueAt $ value c) (lastCorrectAt $ value c)) / 2
+          then 2 * (diffUTCTime time $ lastAnsweredAt $ value c)
+          else (diffUTCTime (dueAt $ value c) (lastAnsweredAt $ value c)) / 2
         nextTime    = addUTCTime inter time
-        updatedCard = (value c) { lastCorrectAt = time, dueAt = nextTime }
-    liftIO $ updateElement k updatedCard conn
-
-
-
+        updatedCard = (value c) { lastAnsweredAt = time, dueAt = nextTime }
+    _ <- liftIO $ updateElement k updatedCard conn
+    ready
 
   categories :: Handler [Record Category]
   categories = liftIO . withResource pool $ getAll
@@ -170,14 +148,15 @@ server3 pool =
     let f a b = #cards := a &! #categories := b
     liftM2 f (getAll conn) (getAll conn)
 
-  card :: NewCardBody -> Handler (Record Card)
+  card :: NewCardBody -> Handler [Record Category]
   card b = liftIO . withResource pool $ \conn -> do
     cid <- case get #categoryId b of
       Just i  -> pure i
       Nothing -> key <$> insertElement (Category $ get #newCategory b) conn
     time <- getCurrentTime
     let due = addUTCTime 15 time
-    insertElement (Card (get #question b) (get #answer b) time due cid) conn
+    _ <-insertElement (Card (get #question b) (get #answer b) time due cid) conn
+    getAll conn
 
   cardDelete :: Key Card -> Handler (Key Card)
   cardDelete = fmap Key . liftIO . withResource pool . deleteElement

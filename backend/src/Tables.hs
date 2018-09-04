@@ -20,7 +20,7 @@ import Data.Time
 data Card = Card {
     question :: Text,
     answer :: Text,
-    lastCorrectAt :: UTCTime,
+    lastAnsweredAt :: UTCTime,
     dueAt :: UTCTime,
     categoryId :: Key Category
 } deriving (Show, Generic)
@@ -30,12 +30,12 @@ instance FromRow Card
 instance ToRow Card
 instance Table Card where
   tableName = TableName $ Identifier "cards"
-  valueList = cardIdC <! cardQuestionC <: cardAnswerC <: cardLastCorrectAtC <: cardDueAtC <: cardCategoryIdC
+  valueList = cardIdC <! cardQuestionC <: cardAnswerC <: cardLastAnsweredAtC <: cardDueAtC <: cardCategoryIdC
 
 cardIdC = Column "id" :: Column Card (Key Card)
 cardQuestionC = Column "question" :: Column Card (Text)
 cardAnswerC = Column "answer" :: Column Card (Text)
-cardLastCorrectAtC = Column "last_correct_at" :: Column Card (UTCTime)
+cardLastAnsweredAtC = Column "last_answered_at" :: Column Card (UTCTime)
 cardDueAtC = Column "due_at" :: Column Card (UTCTime)
 cardCategoryIdC = Column "category_id" :: Column Card (Key Category)
 

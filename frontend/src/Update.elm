@@ -58,7 +58,7 @@ update msg model =
             ( popAlert model, Cmd.none )
 
         MarkCardAs bool ->
-          (model,Requests.markCardAs model bool)
+            ( model, Requests.markCardAs model bool )
 
         FlipCard key ->
             let
@@ -93,8 +93,15 @@ update msg model =
         GetCategories (Err _) ->
             ( model, Cmd.none )
 
-        SubmitNewCardRequest (Ok result) ->
-            ( model, Cmd.none )
+        SubmitNewCardRequest (Ok categories) ->
+            let
+                newModel =
+                    List.foldl (setInputValue "") model [ CardQuestion, CardAnswer ]
+
+                setcm =
+                    setChooserValue SelectedCardCategory ""
+            in
+                ( setCategories categories <| setcm <| newModel, Cmd.none )
 
         SubmitNewCardRequest (Err _) ->
             ( model, Cmd.none )
@@ -121,7 +128,7 @@ update msg model =
             ( { model | categories = categories, readyCard = card }, Cmd.none )
 
         MarkCardResponse (Result.Err _) ->
-            (  model , Cmd.none )
+            ( model, Cmd.none )
 
         DeleteCardResponse (Ok result) ->
             ( popAlert <| { model | cards = List.filter (\x -> x.id /= result) model.cards }, Cmd.none )
@@ -137,11 +144,8 @@ update msg model =
                 newModel =
                     List.foldl (uncurry setInputValue) model newFields
 
-                cm =
-                    getChooserModel SelectedCardCategory newModel
-
                 setcm =
-                    setChooserModel SelectedCardCategory (Chooser.setValue (toString <| unKey <| card.value.categoryId) cm)
+                    setChooserValue SelectedCardCategory (toString <| unKey <| card.value.categoryId)
             in
                 ( setCategories categories <| setcm <| { newModel | editingCard = Just card, requestFinished = True }, Cmd.none )
 

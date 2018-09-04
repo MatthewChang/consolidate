@@ -53,7 +53,7 @@ submitNewCard model =
             "/cards"
 
         request =
-            Http.post url (Http.jsonBody (newCardEncoder model)) int
+            Http.post url (Http.jsonBody (newCardEncoder model)) decodeCategories
     in
         Http.send SubmitNewCardRequest request
 

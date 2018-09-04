@@ -1,6 +1,6 @@
 module Decoding exposing (..)
 
-import Json.Decode as Decode exposing (field, int, string)
+import Json.Decode as Decode exposing (field, int, string, nullable)
 import Json.Encode as Encode
 import Json.Decode.Extra exposing (optionalField)
 import Types exposing (..)
@@ -27,7 +27,7 @@ decodeJoins id1 id2 =
 
 decodeReadyCard : Decode.Decoder ( Maybe (Record Card), List (Record Category) )
 decodeReadyCard =
-    Decode.map2 (,) (optionalField "card" decodeCard) (field "categories" decodeCategories)
+    Decode.map2 (,) (nullable <| field "card" decodeCard) (field "categories" decodeCategories)
 
 
 decodeCardAndCategories : Decode.Decoder ( Record Card, List (Record Category) )
