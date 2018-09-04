@@ -9,14 +9,14 @@ category: Development
 extra-source-files:
   - README.md
 
-ghc-options: -Wall
+ghc-options: 
+  - -Wall
 
 dependencies:
   - base >= 4.9 && < 5
   - base-compat
   - aeson
   - aeson-extra >= 0.4.1.0
-  - Spock
   - text
   - monad-logger
   - wai-middleware-static
@@ -48,6 +48,7 @@ library:
   exposed-modules:
     - Union
     - Lib
+    - Tables
     - SuperRecordExtra
 
 executable:

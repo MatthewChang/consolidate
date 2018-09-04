@@ -1,5 +1,5 @@
 .stack-work/
-Spock-rest.cabal
+flashcards.cabal
 *~
 static/static/bundle.js
 *.db

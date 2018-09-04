@@ -9,7 +9,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedLabels #-}
 
-module ApiType where
+module Main where
 
 import Prelude ()
 import Prelude.Compat
