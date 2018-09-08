@@ -28,12 +28,10 @@ import           Database.PostgreSQL.Simple.FromField hiding (name)
 import           Database.PostgreSQL.Simple.FromRow
 import           Database.PostgreSQL.Simple.ToField
 import           Database.PostgreSQL.Simple.ToRow
-import Database.PostgreSQL.Simple.Types
+import           Database.PostgreSQL.Simple.Types
 import           GHC.Generics
-import           Network.HTTP.Types.Status
 import           Safe
 import Servant
-import Text.Regex
 import Union
 import Data.String.Conversions hiding ((<>))
 import Debug.Trace (trace)
@@ -46,9 +44,6 @@ instance ToRow ( ValueList a ) where
 
 instance ToField (TableName a) where
   toField = toField . unTableName
-
-removeTableName :: String -> String -> String
-removeTableName tn cn = subRegex (mkRegexWithOpts ("^" ++ tn) True False) cn ""
 
 data Column t ty = Column {fromColumn :: Text} deriving (Show)
 instance (Table t) => ToField (Column t a) where

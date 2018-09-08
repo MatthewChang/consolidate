@@ -9,10 +9,7 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedLabels #-}
 
-module Main where
-
-import Prelude ()
-import Prelude.Compat
+module Main (main) where
 
 import Control.Monad.Except
 import Data.ByteString.Lazy.Char8 (pack)
@@ -30,9 +27,12 @@ import SuperRecord hiding (Record)
 import           Data.Pool
 import           Database.PostgreSQL.Simple
 import Network.Wai.Middleware.RequestLogger
-import Control.Monad.Trans.Reader
 import SuperRecordExtra
 import Safe
+import System.Environment
+import Control.Exception (tryJust)
+import System.IO.Error
+import qualified Data.ByteString.Char8 as B
 
 
 data HTML
@@ -41,10 +41,14 @@ instance Accept HTML where
 instance MimeRender HTML String where
     mimeRender _ = pack
 
-{-note the keys have to be provided in alphabetical order for this to work for some reason-}
+--note the keys have to be provided in alphabetical order for this to work for some reason
 type ShowAllResponse = Rec '["cards" := [Record Card], "categories" := [Record Category]]
 type GetCardResponse = Rec '["card" := Record Card, "categories" := [Record Category]]
 type ReadyCardResponse = Rec '["card" := Maybe (Record Card), "categories" := [Record Category]]
+type NewCardBody = Rec '["question" := Text
+                  , "answer" := Text
+                  , "categoryId" := Maybe (Key Category)
+                  , "newCategory" := Text]
 
 type API =  "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] [Record Category]
       :<|> "cards" :> Get '[JSON] [Record Card]
@@ -59,18 +63,18 @@ type API =  "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] [Record Categ
       :<|> Get '[HTML] String
       :<|> "static" :> Raw
 
-type NewCardBody = Rec '["question" := Text
-                  , "answer" := Text
-                  , "categoryId" := Maybe (Key Category)
-                  , "newCategory" := Text]
+getConnectionString :: IO B.ByteString
+getConnectionString = do
+  r <- tryJust (guard . isDoesNotExistError) $ getEnv "DATABASE_URL"
+  return $ case r of
+    Left _ -> postgreSQLConnectionString $ ConnectInfo "localhost" 5432 "" "" "flashcards"
+    Right home -> B.pack home
 
 connectionPool :: IO (Pool Connection)
-connectionPool = createPool
-  (connect (ConnectInfo "localhost" 5432 "" "" "flashcards"))
-  close
-  1
-  10
-  10
+connectionPool = do
+  dbString <- getConnectionString
+  print $ "Connecting to: " ++ dbString
+  createPool (connectPostgreSQL dbString) close 1 10 10
 
 
 cardEdit :: Key Card -> NewCardBody -> Connection -> Handler (Record Card)
@@ -155,7 +159,8 @@ server3 pool =
       Nothing -> key <$> insertElement (Category $ get #newCategory b) conn
     time <- getCurrentTime
     let due = addUTCTime 15 time
-    _ <-insertElement (Card (get #question b) (get #answer b) time due cid) conn
+    _ <- insertElement (Card (get #question b) (get #answer b) time due cid)
+                       conn
     getAll conn
 
   cardDelete :: Key Card -> Handler (Key Card)
@@ -168,11 +173,11 @@ server3 pool =
 userAPI :: Proxy API
 userAPI = Proxy
 
-nt :: Pool Connection -> ReaderT Connection IO x -> Handler x
-nt pool (ReaderT r) = liftIO $ withResource pool r
+--nt :: Pool Connection -> ReaderT Connection IO x -> Handler x
+--nt pool (ReaderT r) = liftIO $ withResource pool r
 
-{-modifiedServer :: Pool Connection -> Server API-}
-{-modifiedServer pool = hoistServer userAPI (nt pool) $ server3 pool-}
+--modifiedServer :: Pool Connection -> Server API
+--modifiedServer pool = hoistServer userAPI (nt pool) $ server3 pool
 -- 'serve' comes from servant and hands you a WAI Application,
 -- which you can think of as an "abstract" web application,
 -- not yet a webserver.

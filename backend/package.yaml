@@ -14,33 +14,24 @@ ghc-options:
 
 dependencies:
   - base >= 4.9 && < 5
-  - base-compat
   - aeson
   - aeson-extra >= 0.4.1.0
   - text
-  - monad-logger
   - wai-middleware-static
   - bytestring
-  - http-types
   - postgresql-simple
   - resource-pool
   - safe
-  - casing
   - string-conversions
-  - regex-compat
   - servant
   - servant-server
   - wai
   - warp
   - mtl
-  - aeson-compat
-  - attoparsec
   - http-media
   - time
-  - directory
   - superrecord
   - wai-extra
-  - transformers
 
 
 library:
