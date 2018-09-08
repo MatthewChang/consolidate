@@ -73,7 +73,7 @@ getConnectionString = do
 connectionPool :: IO (Pool Connection)
 connectionPool = do
   dbString <- getConnectionString
-  print $ "Connecting to: " ++ dbString
+  putStrLn $ "Connecting to: " ++ B.unpack dbString
   createPool (connectPostgreSQL dbString) close 1 10 10
 
 
