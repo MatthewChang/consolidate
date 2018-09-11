@@ -12,10 +12,9 @@ runRaw :: Text -> Sh Text
 runRaw t = T.strip <$> run (fromText first) rest
   where (first : rest) = T.splitOn " " t
 
+app = "mchang-flashcards"
+
 main = shelly $ verbosely $ do
-  runRaw "docker build . -t flashcards -f BuildDockerfile"
-  path <- runRaw "docker run flashcards stack path --local-install-root"
-  id   <- runRaw "docker create flashcards"
-  runRaw $ "docker cp " <> id <> ":" <> path <> "/bin/flashcards ./exe"
-  runRaw $ "docker rm -v " <> id
-  runRaw "docker build . -t deploy"
+  runRaw "./build.hs"
+  runRaw $ "heroku container:push web --app " <> app
+  runRaw $ "heroku container:release web --app " <> app

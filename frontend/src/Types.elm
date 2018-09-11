@@ -2,6 +2,7 @@ module Types exposing (..)
 
 import UrlParser as Url exposing ((</>))
 import Navigation
+import Time.DateTime exposing (DateTime)
 
 
 type Key a
@@ -26,7 +27,7 @@ type alias Card =
     , answer : String
 
     --change to datetime
-    , dueAt : String
+    , dueAt : DateTime
     , categoryId : Key Category
     }
 

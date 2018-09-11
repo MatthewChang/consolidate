@@ -1,0 +1,15 @@
+FROM ubuntu:18.04
+RUN apt-get update && apt-get install -y curl
+RUN curl -sSL https://get.haskellstack.org/ | sh
+RUN apt-get update && apt-get install -y libpq-dev
+# added just to improve build times when I change packages
+RUN stack --resolver ghc-8.4.3 setup
+RUN mkdir /app
+ADD package.yaml /app
+ADD stack.yaml /app
+WORKDIR /app
+# maybe build elm app here
+RUN stack install --install-ghc --only-dependencies
+ADD . /app
+RUN stack build
+RUN echo "ROOTLOC: stack path --local-install-root"

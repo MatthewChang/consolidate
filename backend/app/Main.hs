@@ -16,8 +16,8 @@ import Data.ByteString.Lazy.Char8 (pack)
 --import GHC.Generics
 import Network.HTTP.Media ((//), (/:))
 import           Data.Text (Text)
-import Network.Wai
-import Network.Wai.Handler.Warp
+import Network.Wai 
+import Network.Wai.Handler.Warp hiding (getPort)
 import Servant
 import System.IO
 import Tables
@@ -69,6 +69,13 @@ getConnectionString = do
   return $ case r of
     Left _ -> postgreSQLConnectionString $ ConnectInfo "localhost" 5432 "" "" "flashcards"
     Right home -> B.pack home
+
+getPort :: IO Int
+getPort = do
+  r <- tryJust (guard . isDoesNotExistError) $ getEnv "PORT"
+  return $ case r of
+    Left _ -> 8080
+    Right port -> read port
 
 connectionPool :: IO (Pool Connection)
 connectionPool = do
@@ -187,4 +194,6 @@ app1 pool = serve userAPI $ server3 pool
 main :: IO ()
 main = do
   pool <- connectionPool
-  run 8080 $ logStdoutDev $ app1 pool
+  port <- getPort
+  putStrLn $ "Listening on " ++ show port
+  run port $ logStdoutDev $ app1 pool

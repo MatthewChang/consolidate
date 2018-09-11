@@ -1,11 +1,13 @@
 module Decoding exposing (..)
 
-import Json.Decode as Decode exposing (field, int, string, nullable)
+import Json.Decode as Decode exposing (field, int, string, nullable, decodeString)
 import Json.Encode as Encode
 import Json.Decode.Extra exposing (optionalField)
 import Types exposing (..)
 import Types.Input exposing (..)
 import Model exposing (..)
+import Time.Iso8601 exposing (..)
+import Time.DateTime exposing (DateTime)
 
 
 decodeJoins : String -> String -> Decode.Decoder (List (JoinEntry a b))
@@ -24,10 +26,9 @@ decodeJoins id1 id2 =
 --(field "tags" decodeTags)
 --(field "songTags" <| decodeSongTags)
 
-
 decodeReadyCard : Decode.Decoder ( Maybe (Record Card), List (Record Category) )
 decodeReadyCard =
-    Decode.map2 (,) (nullable <| field "card" decodeCard) (field "categories" decodeCategories)
+    Decode.map2 (,) (field "card" <| nullable decodeCard) (field "categories" decodeCategories)
 
 
 decodeCardAndCategories : Decode.Decoder ( Record Card, List (Record Category) )
@@ -47,6 +48,11 @@ decodeCategories =
             (field "id" int)
             (field "name" string)
 
+decodeTime : Decode.Decoder DateTime
+decodeTime = string  |> Decode.andThen (\x ->
+        case toDateTime x of
+          Err _ -> Decode.fail "date parse failed"
+          Ok time -> Decode.succeed <| time)
 
 decodeCard : Decode.Decoder (Record Card)
 decodeCard =
@@ -54,7 +60,7 @@ decodeCard =
         (field "id" int)
         (field "question" string)
         (field "answer" string)
-        (field "dueAt" string)
+        (field "dueAt" decodeTime)
         (field "categoryId" int)
 
 
