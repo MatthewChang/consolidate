@@ -4,3 +4,4 @@ flashcards.cabal
 static/static/bundle.js
 *.db
 exe
+.tags

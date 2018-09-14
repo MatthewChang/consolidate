@@ -16,5 +16,5 @@ app = "mchang-flashcards"
 
 main = shelly $ verbosely $ do
   runRaw "./build.hs"
-  runRaw $ "heroku container:push web --app " <> app
-  runRaw $ "heroku container:release web --app " <> app
+  runRaw $ "heroku container:push web:0.0.1 --app " <> app
+  runRaw $ "heroku container:release web:0.0.1 --app " <> app

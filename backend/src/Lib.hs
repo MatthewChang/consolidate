@@ -20,7 +20,7 @@ import           Data.Aeson                           hiding (json)
 import           Data.Aeson.Extra                     hiding (json, value)
 import           Data.Int                             (Int64)
 import           Data.List
-import           Data.Semigroup
+import           Data.Semigroup hiding (getAll)
 import           Data.String (fromString)
 import           Data.Text (Text)
 import           Database.PostgreSQL.Simple
@@ -31,6 +31,7 @@ import           Database.PostgreSQL.Simple.ToRow
 import           Database.PostgreSQL.Simple.Types
 import           GHC.Generics
 import           Safe
+import Control.Monad.Reader
 import Servant
 import Union
 import Data.String.Conversions hiding ((<>))
@@ -187,10 +188,16 @@ instance (Table a) => Buildable a (Record a) where
 --executeQuery q = runQuery $ \conn -> query conn qs qv
   --where ConstructedQuery qs qv = q
 
+
+runQueryT :: (FromRow a) => ConstructedQuery a -> ReaderT Connection IO [a]
+runQueryT = ReaderT . runQuery
+
 runQuery :: (FromRow a) => ConstructedQuery a -> Connection -> IO [a]
 runQuery (ConstructedQuery q r) c = query c q r
 
---find :: (Table a, FromRow a, HasSpock m, SpockConn m ~ Connection) => Key a -> m (Maybe (Record a)) find k = runQuery $ findQuery tableName k
+find
+  :: (Table a, FromRow a) => Key a -> ReaderT Connection IO (Maybe (Record a))
+find = ReaderT . findConnection
 
 findConnection
   :: (Table a, FromRow a) => Key a -> Connection -> IO (Maybe (Record a))
@@ -200,6 +207,7 @@ findQuery
   :: (FromRow a) => TableName a -> Key a -> Connection -> IO (Maybe (Record a))
 findQuery (TableName n) (Key k) conn =
   headMay <$> query conn "select * from ? where id = ?;" (n, k)
+
 
 updateElement :: (Table a) => Key a -> a -> Connection -> IO (Record a)
 updateElement key record conn = do
@@ -222,6 +230,9 @@ updateElement key record conn = do
 
 --getAll :: (Table a, FromRow a, HasSpock m, SpockConn m ~ Connection) => m ([Record a])
 --getAll = runQuery $ getFromTable tableName
+
+getAllT :: (Table a, FromRow a) => ReaderT Connection IO [Record a]
+getAllT = ReaderT getAll
 
 getAll :: (Table a, FromRow a) => Connection -> IO [Record a]
 getAll = getFromTable tableName

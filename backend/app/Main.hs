@@ -33,6 +33,7 @@ import System.Environment
 import Control.Exception (tryJust)
 import System.IO.Error
 import qualified Data.ByteString.Char8 as B
+import Control.Monad.Reader
 
 
 data HTML
@@ -105,6 +106,7 @@ newOrExistingCategoryId b conn = case get #categoryId b of
   Just i  -> pure i
   Nothing -> key <$> insertElement (Category $ get #newCategory b) conn
 
+
 server3 :: Pool Connection -> Server API
 server3 pool =
   card
@@ -154,10 +156,15 @@ server3 pool =
   categories :: Handler [Record Category]
   categories = liftIO . withResource pool $ getAll
 
+  --showAll :: Handler ShowAllResponse
+  --showAll = liftIO . withResource pool $ \conn -> do
+    --let f a b = #cards := a &! #categories := b
+    --liftM2 f (getAll conn) (getAll conn)
+
   showAll :: Handler ShowAllResponse
-  showAll = liftIO . withResource pool $ \conn -> do
+  showAll = liftIO . withResource pool . runReaderT $ do
     let f a b = #cards := a &! #categories := b
-    liftM2 f (getAll conn) (getAll conn)
+    liftM2 f (getAllT) (getAllT)
 
   card :: NewCardBody -> Handler [Record Category]
   card b = liftIO . withResource pool $ \conn -> do
