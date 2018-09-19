@@ -8,7 +8,7 @@ module SuperRecordExtra where
 
 import SuperRecord
 
-{-to avoid having to have rnil in all record definitions-}
+--to avoid having to have rnil in all record definitions
 (&!) a b = a & b & rnil
 infixr 5 &!
 

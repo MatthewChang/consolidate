@@ -41,6 +41,7 @@ library:
     - Lib
     - Tables
     - SuperRecordExtra
+    - SchemaMatch
 
 executable:
   main: Main.hs

@@ -34,6 +34,7 @@ import Control.Exception (tryJust)
 import System.IO.Error
 import qualified Data.ByteString.Char8 as B
 import Control.Monad.Reader
+import SchemaMatch (perform)
 
 
 data HTML
