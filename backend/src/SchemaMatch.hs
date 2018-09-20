@@ -10,27 +10,8 @@
 module SchemaMatch where
 
 import GHC.Exts (Constraint)
-import           SuperRecord
+import SuperRecord
 import GHC.TypeLits
-
-
-type Store = Rec '["name" := String, "money" := Int]
-
---type Schema = '["user" := User, "money" := Int]
---type User = Rec '["name" := String, "age" := Int]
-
---type GoodTestRecord = '["user" := User]
---type EasyBadRecord = '["user" := Int]
---type HardGoodRecord = '["user" := Rec '["name" := String]]
---type HardBadRecord = '["user" := Rec '["name" := Int]]
-
-
-
---test :: Has "name" '["name" := String] Int => Int
---test = 5
-
---testBad :: HasOf '["name" := String] '["name" := Int] => Int
---testBad = 5
 
 -- Returns the type from a record property if it exists, error otherwise
 type family RecTy (l :: Symbol) (lts :: [*]) :: * where

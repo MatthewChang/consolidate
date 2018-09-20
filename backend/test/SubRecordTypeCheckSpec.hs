@@ -18,12 +18,6 @@ import           SuperRecordExtra
 type Schema = '["user" := User, "money" := Int]
 type User = Record '["name" := String, "age" := Int]
 
-type GoodTestRecord = '["user" := User]
-type EasyBadRecord = '["user" := Int]
-type HardGoodRecord = '["user" := Record '["name" := String]]
-type HardBadRecord = '["user" := Record '["name" := Int]]
-
-
 single = (& rnil)
 
 perform :: (SubRecordR input Schema) => (Rec input) -> Int
