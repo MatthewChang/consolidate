@@ -97,8 +97,8 @@ type family RemoveSwitch l (lts :: [*]) where
   RemoveSwitch l (l := v ': rest) = 'True
   RemoveSwitch a (l := v ': rest) = 'False
 
---remove :: forall lts l switch . (Remove l lts lts (Removed l lts), switch ~ RemoveSwitch l lts) => FldProxy l -> Rec lts -> Rec (Removed l lts)
---remove = remove' (Proxy :: Proxy switch) (Proxy :: Proxy lts)
+remove :: forall lts l . (Remove l lts lts (Removed l lts)) => FldProxy l -> Rec lts -> Rec (Removed l lts)
+remove = remove' (Proxy :: Proxy lts)
 
 --class Remove switch l (lts :: [*]) (remain :: [*]) (out :: [*]) | l remain -> out where
   --remove' :: Proxy switch -> Proxy remain -> FldProxy l -> Rec lts -> Rec out
@@ -118,16 +118,16 @@ type family RemoveSwitch l (lts :: [*]) where
 
 -- Working
 class Remove l (lts :: [*]) (remain :: [*]) (out :: [*]) | l remain -> out where
-  remove :: Proxy remain -> FldProxy l -> Rec lts -> Rec out
+  remove' :: Proxy remain -> FldProxy l -> Rec lts -> Rec out
 
 instance Remove l lts '[] '[] where
-  remove _ _ _ = rnil
+  remove' _ _ _ = rnil
 
-instance (Has hl inp hv
+instance {-# OVERLAPPABLE #-} (Has hl inp hv
   , Addable hl hv (Removed rl rest) out
   , Remove rl inp rest (Removed rl rest)) => Remove rl inp (hl := hv ': rest) out where
-  remove _ rl input = (hl := (get hl input)) & (remove (Proxy :: Proxy rest) rl input) where
+  remove' _ rl input = (hl := (get hl input)) & (remove' (Proxy :: Proxy rest) rl input) where
     hl = FldProxy :: FldProxy hl
 
 instance (Remove rl lts rest out,out ~ Removed rl rest) => Remove rl lts (rl := v ': rest) out where
-  remove _ rl input = (remove (Proxy :: Proxy rest) rl input) where
+  remove' _ rl input = (remove' (Proxy :: Proxy rest) rl input) where
