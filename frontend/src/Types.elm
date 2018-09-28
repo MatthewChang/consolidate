@@ -31,7 +31,6 @@ type alias Card =
     , categoryId : Key Category
     }
 
-
 type alias Category =
     { name : String }
 

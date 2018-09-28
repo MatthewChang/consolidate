@@ -16,7 +16,7 @@ import Data.ByteString.Lazy.Char8 (pack)
 --import GHC.Generics
 import Network.HTTP.Media ((//), (/:))
 import           Data.Text (Text)
-import Network.Wai 
+import Network.Wai
 import Network.Wai.Handler.Warp hiding (getPort)
 import Servant
 import System.IO
@@ -24,6 +24,7 @@ import Tables
 import Lib
 import Data.Time.Clock
 import SuperRecord hiding (Record)
+import qualified SuperRecord (Record)
 import           Data.Pool
 import           Database.PostgreSQL.Simple
 import Network.Wai.Middleware.RequestLogger
@@ -34,7 +35,8 @@ import Control.Exception (tryJust)
 import System.IO.Error
 import qualified Data.ByteString.Char8 as B
 import Control.Monad.Reader
-import SchemaMatch (perform)
+import Data.Sort
+
 
 
 data HTML
@@ -43,11 +45,10 @@ instance Accept HTML where
 instance MimeRender HTML String where
     mimeRender _ = pack
 
---note the keys have to be provided in alphabetical order for this to work for some reason
-type ShowAllResponse = Rec '["cards" := [Record Card], "categories" := [Record Category]]
-type GetCardResponse = Rec '["card" := Record Card, "categories" := [Record Category]]
-type ReadyCardResponse = Rec '["card" := Maybe (Record Card), "categories" := [Record Category]]
-type NewCardBody = Rec '["question" := Text
+type ShowAllResponse = SuperRecord.Record '["cards" := [Record Card], "categories" := [Record Category]]
+type GetCardResponse = SuperRecord.Record '["card" := Record Card, "categories" := [Record Category]]
+type ReadyCardResponse = SuperRecord.Record '["card" := Maybe (Record Card), "categories" := [Record Category]]
+type NewCardBody = SuperRecord.Record '["question" := Text
                   , "answer" := Text
                   , "categoryId" := Maybe (Key Category)
                   , "newCategory" := Text]
@@ -69,14 +70,15 @@ getConnectionString :: IO B.ByteString
 getConnectionString = do
   r <- tryJust (guard . isDoesNotExistError) $ getEnv "DATABASE_URL"
   return $ case r of
-    Left _ -> postgreSQLConnectionString $ ConnectInfo "localhost" 5432 "" "" "flashcards"
+    Left _ -> postgreSQLConnectionString
+      $ ConnectInfo "localhost" 5432 "" "" "flashcards"
     Right home -> B.pack home
 
 getPort :: IO Int
 getPort = do
   r <- tryJust (guard . isDoesNotExistError) $ getEnv "PORT"
   return $ case r of
-    Left _ -> 8080
+    Left  _    -> 8080
     Right port -> read port
 
 connectionPool :: IO (Pool Connection)
@@ -128,8 +130,7 @@ server3 pool =
 
   ready :: Handler ReadyCardResponse
   ready = liftIO . withResource pool $ \conn -> do
-    time <- getCurrentTime
-    cs   <- (runQuery . build $ time >=. cardDueAtC) conn
+    cs   <- sortOn (dueAt . value) <$> getAll conn
     cats <- getAll conn
     return $ #card := (headMay cs) &! #categories := cats
 

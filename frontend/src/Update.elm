@@ -11,6 +11,8 @@ import EveryDict
 import Ui.Chooser as Chooser
 import Types.Msg exposing (..)
 import Utility exposing (..)
+import Task
+import Time
 
 
 popAlert : Model -> Model
@@ -33,6 +35,10 @@ setCategories c m =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
+        GetTime msg ->
+            (model, Task.perform (GotTime msg) Time.now)
+        GotTime msg time ->
+            update msg {model | currentTime = Just time}
         SubmitNewCard ->
             ( model, Requests.submitNewCard model )
 

@@ -13,7 +13,7 @@ ghc-options:
   - -Wall
 
 dependencies:
-  - base >= 4.9 && < 5
+  - base
   - aeson
   - aeson-extra >= 0.4.1.0
   - text
@@ -25,14 +25,15 @@ dependencies:
   - string-conversions
   - servant
   - servant-server
+  - sort
   - wai
   - warp
   - mtl
   - http-media
   - time
-  - superrecord
   - wai-extra
-
+  - ghc-typelits-knownnat
+  - superrecord
 
 library:
   source-dirs: src

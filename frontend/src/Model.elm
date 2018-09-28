@@ -11,6 +11,7 @@ import Types.Input exposing (..)
 import Types.Msg exposing (..)
 import Ui.Chooser as Chooser
 import Set as Set
+import Time exposing (..)
 
 
 performInitialFetch : Cmd Msg
@@ -30,6 +31,7 @@ type alias Model =
     , editingCard : Maybe (Record Card)
     , flippedCards : EveryDict.EveryDict (Key Card) Bool
     , alerts : List AlertDialogContents
+    , currentTime : Maybe Time
     }
 
 
@@ -54,6 +56,7 @@ initialState location =
       , editingCard = Nothing
       , flippedCards = EveryDict.empty
       , alerts = []
+      , currentTime = Nothing
       }
     , performInitialFetch
     )

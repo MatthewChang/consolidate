@@ -12,18 +12,31 @@ import Html.Styled.Events exposing (onClick)
 import Views.Theme exposing (..)
 import Views.Card exposing (..)
 import Types.Msg exposing (..)
+import Time exposing (..)
+
+
+pendingCard : Model -> Html Msg
+pendingCard model =
+    div [] []
 
 
 homePage : Model -> Html Msg
 homePage model =
     let
+        none = span [] [ text "None" ]
         display =
             case model.readyCard of
                 Nothing ->
-                    span [] [ text "None" ]
+                    none
 
                 Just c ->
-                    card False model c
+                  case model.currentTime of
+                  Nothing -> Debug.log "no time?" none
+                  Just time ->
+                    if (fromTimestamp c.value.dueAt) < inSeconds time then
+                        card False model c
+                    else
+                        pendingCard model
     in
         div
             [ css

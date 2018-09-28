@@ -43,7 +43,7 @@ getHome =
         request =
             Http.get url <| decodeReadyCard
     in
-        Http.send GetReadyCardsResponse request
+        Http.send (GetTime << GetReadyCardsResponse) request
 
 
 submitNewCard : Model -> Cmd Msg
@@ -114,4 +114,4 @@ markCardAs model bool =
                     post
                     ("/cards/" ++ toString (unKey card.id) ++ res)
                     |> withExpectJson decodeReadyCard
-                    |> send (MarkCardResponse)
+                    |> send (GetTime << MarkCardResponse)

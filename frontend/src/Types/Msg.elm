@@ -3,7 +3,8 @@ module Types.Msg exposing (..)
 import Types.Input
 import Http
 import Navigation
-import Time
+import Time.DateTime exposing (..)
+import Time exposing (..)
 import Types exposing (..)
 import Types.Input exposing (..)
 import Ui.Chooser as Chooser
@@ -12,11 +13,14 @@ import Ui.Chooser as Chooser
 type alias ShowAllResponse =
     ( List (Record Category), List (Record Card) )
 
+--type MsgWithTime = GetTime Msg | GotTime Msg DateTime
 
 type Msg
     = HandleUrlChange Navigation.Location
     | InitializeFetch
     | NavigateTo Route
+    | GetTime Msg
+    | GotTime Msg Time
     | ToggleMenu
     | FlipCard (Key Card)
     | PushAlert AlertDialogContents
