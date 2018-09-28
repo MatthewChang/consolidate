@@ -68,53 +68,13 @@ type family Removed l (lts :: [*]) where
   Removed l (a := v ': rest) = a := v ': (Removed l rest)
   Removed l '[] = '[]
 
---old
---remove :: forall lts l . (Remove l lts lts) => FldProxy l -> Rec lts -> Rec (Removed l lts)
---remove = remove' (Proxy :: Proxy lts)
-
---class Remove l (lts :: [*]) (remain :: [*]) where
-  --remove' :: Proxy remain -> FldProxy l -> Rec lts -> Rec (Removed l remain)
-
---instance Remove l lts '[] where
-  --remove' _ _ _ = rnil
-
---instance (Has hl inp hv
-  --, Addable hl hv (Removed rl rest) (hl := hv ': (Removed rl rest))
-  --, Remove rl inp rest
-  ----, Test rl hl hv rest
-  ----, Test2 rl hl hv rest
-  ---- verify that this key is not removed
-  ----, (hl := hv ': (Removed rl rest)) ~ (hl := hv ': (Removed l rest))
-         --) => Remove rl inp (hl := hv ': rest) where
-  --remove' _ rl input = nonMatchItem & (remove' (Proxy :: Proxy rest) rl input) where
-    --nonMatchItem = (hl := (get hl input))
-    --hl = FldProxy :: FldProxy hl
-
---instance (Remove rl lts rest) => Remove rl lts (rl := v ': rest) where
-  --remove' _ rl input = (remove' (Proxy :: Proxy rest) rl input) where
-
-type family RemoveSwitch l (lts :: [*]) where
-  RemoveSwitch l (l := v ': rest) = 'True
-  RemoveSwitch a (l := v ': rest) = 'False
-
-remove :: forall lts l . (Remove l lts lts (Removed l lts)) => FldProxy l -> Rec lts -> Rec (Removed l lts)
+remove
+  :: forall lts l
+   . (Remove l lts lts (Removed l lts))
+  => FldProxy l
+  -> Rec lts
+  -> Rec (Removed l lts)
 remove = remove' (Proxy :: Proxy lts)
-
---class Remove switch l (lts :: [*]) (remain :: [*]) (out :: [*]) | l remain -> out where
-  --remove' :: Proxy switch -> Proxy remain -> FldProxy l -> Rec lts -> Rec out
-
---instance Remove a l lts '[] '[] where
-  --remove' _ _ _ _ = rnil
-
---instance (Has hl inp hv
-  --, Addable hl hv (Removed rl rest) out
-  --, Remove rl inp rest (Removed rl rest)) => Remove 'False rl inp (hl := hv ': rest) out where
-  --remove' _ _ rl input = nonMatchItem & (remove' (Proxy :: Proxy rest) rl input) where
-    --nonMatchItem = (hl := (get hl input))
-    --hl = FldProxy :: FldProxy hl
-
---instance (Remove rl lts rest out, out ~ Removed rl rest) => Remove 'True rl lts (rl := v ': rest) out where
-  --remove' _ _ rl input = (remove' (Proxy :: Proxy rest) rl input) where
 
 -- Working
 class Remove l (lts :: [*]) (remain :: [*]) (out :: [*]) | l remain -> out where
