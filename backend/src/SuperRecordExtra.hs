@@ -24,36 +24,14 @@ import GHC.TypeLits
 (&!) a b = a & b & rnil
 infixr 5 &!
 
+add l e r = l := e & r
+
 -- Coppied from super record because it is not exported
 type RecVecIdxPos l lts = RecSize lts - RecTyIdxH 0 l lts - 1
 
 -- Constraint that you can add a label (l) with type (t) to the record (lts) resulting
 -- in a record (out), which is lts with the new entry sorted in
 type Addable l t lts out = (out ~ Sort (l := t ': lts), KeyDoesNotExist l lts, KnownSymbol l, KnownNat (RecSize lts), RecCopy lts lts out, KnownNat (RecVecIdxPos l out))
-
---pop
---class Pop (a :: [*]) where
-  --pop :: Proxy a -> String
-
---instance (Pop rest,KnownSymbol l) => Pop ((l := v) ': rest) where
-  --pop _ = symbolVal (FldProxy :: FldProxy l ) ++ pop (Proxy :: Proxy rest)
-
---instance Pop '[] where
-  --pop _ = "test"
-
---copy :: forall lts . (Copy' lts lts) => Rec lts -> Rec lts
---copy = copy' (Proxy :: Proxy lts)
-
---copy
---class Copy' (lts :: [*]) (remain :: [*]) where
-  --copy' :: Proxy remain -> Rec lts -> Rec remain
-
---instance Copy' lts '[] where
-  --copy' _ _ = rnil
-
---instance (Has l lts v,Addable l v rest (l := v ': rest), Copy' lts rest) => Copy' lts (l := v ': rest) where
-  --copy' _ r = (label := (get label r)) & (copy' (Proxy :: Proxy rest) r) where
-    --label = FldProxy :: FldProxy l
 
 --remove
 type family Removed l (lts :: [*]) where
@@ -87,12 +65,50 @@ instance {-# OVERLAPPABLE #-} (Has hl inp hv
 instance (Remove rl lts rest out,out ~ Removed rl rest) => Remove rl lts (rl := v ': rest) out where
   remove' _ rl input = (remove' (Proxy :: Proxy rest) rl input) where
 
+--Constraint that you can modify a record (lts) with key "l" of type "v1" to type "v2" resulting in a
+--record with types "out"
+type Modifyable l v1 v2 lts out = (Removable l lts, Addable l v2 (Removed l lts) out, Has l lts v1)
+
 --Change the value of a key l, allowing types to change. Slower than modify with the same type
 modifyType
   :: forall l v lts t out
-   . (Removable l lts, Addable l t (Removed l lts) out, Has l lts v)
+   . (Modifyable l v t lts out)
   => FldProxy l
   -> (v -> t)
   -> Rec lts
   -> Rec out
 modifyType l f r = l := nv & (remove l r) where nv = f $ get l r
+
+
+--type aware set
+data SetResult = Same | Diff | New
+
+type family SettableSwitch (l :: Symbol) t lts :: SetResult where
+  SettableSwitch l t '[] = 'New
+  SettableSwitch l t (l := t ': rest) = 'Same
+  SettableSwitch l t (l := o ': rest) = 'Diff
+  SettableSwitch l t (a := o ': rest) = SettableSwitch l t rest
+
+set
+  :: forall s l t lts out
+   . (Settable' s l t lts out, s ~ SettableSwitch l t lts)
+  => FldProxy l
+  -> t
+  -> Rec lts
+  -> Rec out
+set = set' (Proxy :: Proxy s)
+
+class Settable' (switch :: SetResult) l t (lts :: [*]) (out :: [*]) | switch l t lts -> out where
+  set' :: Proxy switch -> FldProxy l -> t -> Rec lts -> Rec out
+
+-- when list already has key with same type
+instance (Has l lts t) => Settable' 'Same l t lts lts where
+  set' _ l v = modify l (const v)
+
+-- when list has key with different type
+instance (Modifyable l a v lts out) => Settable' 'Diff l v lts out where
+  set' _ l v = modifyType l (const v)
+
+-- when list does not have key
+instance (KeyDoesNotExist l lts, Addable l t lts out) => Settable' 'New l t lts out where
+  set' _ l v = rcons (l := v)
