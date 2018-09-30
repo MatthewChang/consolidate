@@ -74,7 +74,7 @@ frontView model card =
                 [ text categoryName ]
             ]
 
-
+-- Bool indicates if the edit buttons should display
 card : Bool -> Model -> Record Card -> Html Msg
 card buttons model card =
     let

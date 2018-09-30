@@ -13,30 +13,56 @@ import Views.Theme exposing (..)
 import Views.Card exposing (..)
 import Types.Msg exposing (..)
 import Time exposing (..)
+import Time.DateTime exposing (..)
+import Utility exposing (..)
 
 
-pendingCard : Model -> Html Msg
-pendingCard model =
-    div [] []
+pendingCard : DateTime -> DateTime -> Html Msg
+pendingCard currentTime time =
+    let
+        diff =
+            delta time currentTime
+
+        values =
+            [ ( diff.days, "days" )
+            , ( diff.hours % 24, "hours" )
+            , ( diff.minutes % 60, "minutes" )
+            , ( diff.seconds % 60, "seconds" )
+            ]
+
+        --use scanl to get diffs
+        filtered =
+            List.take 2 <| List.filter (\( x, label ) -> x > 0 || label == "seconds") (log values)
+
+        combine =
+            \( num, l ) str -> str ++ " " ++ toString num ++ " " ++ l
+
+        string =
+            List.foldl combine "" filtered
+    in
+        span [] [ text string ]
 
 
 homePage : Model -> Html Msg
 homePage model =
     let
-        none = span [] [ text "None" ]
         display =
             case model.readyCard of
                 Nothing ->
-                    none
+                    span [] [ text "None" ]
 
                 Just c ->
-                  case model.currentTime of
-                  Nothing -> Debug.log "no time?" none
-                  Just time ->
-                    if (fromTimestamp c.value.dueAt) < inSeconds time then
-                        card False model c
-                    else
-                        pendingCard model
+                    case Maybe.map fromTimestamp model.currentTime of
+                        Nothing ->
+                            Debug.log "no time?" <| span [] [ text "No Time Found" ]
+
+                        Just time ->
+                            case Time.DateTime.compare c.value.dueAt time of
+                                LT ->
+                                    card False model c
+
+                                _ ->
+                                    pendingCard time c.value.dueAt
     in
         div
             [ css

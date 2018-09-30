@@ -32,13 +32,20 @@ setCategories c m =
         { newModel | categories = c }
 
 
+resetFlippedCards : Model -> Model
+resetFlippedCards model =
+    { model | flippedCards = EveryDict.empty }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         GetTime msg ->
-            (model, Task.perform (GotTime msg) Time.now)
+            ( model, Task.perform (GotTime msg) Time.now )
+
         GotTime msg time ->
-            update msg {model | currentTime = Just time}
+            update msg { model | currentTime = Just time }
+
         SubmitNewCard ->
             ( model, Requests.submitNewCard model )
 
@@ -113,11 +120,12 @@ update msg model =
             ( model, Cmd.none )
 
         FetchAllPage (Ok ( cats, cards )) ->
-            ( { model
-                | requestFinished = True
-                , categories = cats
-                , cards = cards
-              }
+            ( resetFlippedCards <|
+                { model
+                    | requestFinished = True
+                    , categories = cats
+                    , cards = cards
+                }
             , Cmd.none
             )
 
@@ -125,13 +133,13 @@ update msg model =
             ( { model | requestFinished = True }, Cmd.none )
 
         GetReadyCardsResponse (Ok ( card, categories )) ->
-            ( { model | requestFinished = True, categories = categories, readyCard = card }, Cmd.none )
+            ( resetFlippedCards <| { model | requestFinished = True, categories = categories, readyCard = card }, Cmd.none )
 
         GetReadyCardsResponse (Result.Err _) ->
             ( { model | requestFinished = True }, Cmd.none )
 
         MarkCardResponse (Ok ( card, categories )) ->
-            ( { model | categories = categories, readyCard = card }, Cmd.none )
+            ( resetFlippedCards <| { model | categories = categories, readyCard = card }, Cmd.none )
 
         MarkCardResponse (Result.Err _) ->
             ( model, Cmd.none )
