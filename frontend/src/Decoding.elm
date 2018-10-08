@@ -56,11 +56,11 @@ decodeTime = string  |> Decode.andThen (\x ->
 
 decodeCard : Decode.Decoder (Record Card)
 decodeCard =
-    Decode.map5 (\id question answer dueAt categoryId -> Record (Key id) (Card question answer dueAt (Key categoryId)))
-        (field "id" int)
+    Decode.map6 (\id question answer dueAt laa categoryId -> Record (Key id) (Card question answer dueAt laa (Key categoryId))) (field "id" int)
         (field "question" string)
         (field "answer" string)
         (field "dueAt" decodeTime)
+        (field "lastAnsweredAt" decodeTime)
         (field "categoryId" int)
 
 

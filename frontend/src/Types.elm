@@ -25,11 +25,11 @@ type alias Record a =
 type alias Card =
     { question : String
     , answer : String
-
-    --change to datetime
     , dueAt : DateTime
+    , lastAnsweredAt : DateTime
     , categoryId : Key Category
     }
+
 
 type alias Category =
     { name : String }

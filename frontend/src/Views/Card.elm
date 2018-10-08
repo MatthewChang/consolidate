@@ -9,6 +9,7 @@ import Html.Styled.Events exposing (onWithOptions, onClick)
 import Views.Theme exposing (..)
 import Types.Msg exposing (..)
 import Json.Decode as Decode
+import Time.DateTime as DateTime
 
 
 onClickNoPropagation : Msg -> Html.Styled.Attribute Msg
@@ -51,6 +52,7 @@ backView b card =
                             [ text "Wrong" ]
                         ]
                    ]
+                ++ [ span [] [ text ("Last At: " ++ (DateTime.toISO8601 card.value.lastAnsweredAt)) ] ]
             )
 
 
@@ -74,7 +76,11 @@ frontView model card =
                 [ text categoryName ]
             ]
 
+
+
 -- Bool indicates if the edit buttons should display
+
+
 card : Bool -> Model -> Record Card -> Html Msg
 card buttons model card =
     let

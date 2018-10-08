@@ -16,12 +16,14 @@ import Types.Msg exposing (..)
 import Types.KeyOrOtherDropdownOption exposing (..)
 import Ui.Chooser as Chooser
 import Views.Card exposing (..)
+import Time.DateTime exposing (..)
 
 
 viewAllPage : Model -> Html Msg
 viewAllPage model =
     let
         cardList =
-            List.map (card True model) model.cards
+            List.map (card True model) <| List.reverse <| List.sortBy (\x -> toTimestamp x.value.lastAnsweredAt) model.cards
     in
         div [ css [ padding <| px 25 ] ] <| cardList
+
