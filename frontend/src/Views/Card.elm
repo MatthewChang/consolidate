@@ -12,6 +12,11 @@ import Json.Decode as Decode
 import Time.DateTime as DateTime
 
 
+renderText : String -> List (Html Msg)
+renderText s =
+    List.intersperse (br [] []) <| List.map (\x -> span [] [ text x ]) <| String.split "\n" s
+
+
 onClickNoPropagation : Msg -> Html.Styled.Attribute Msg
 onClickNoPropagation =
     onWithOptions "click" { preventDefault = True, stopPropagation = True } << Decode.succeed
@@ -37,7 +42,7 @@ backView b card =
                 []
     in
         div []
-            ([ span [] [ text card.value.answer ] ]
+            ([ span [] <| renderText card.value.answer ]
                 ++ buttons
                 ++ [ div [ css [ marginTop <| px 14 ] ]
                         [ button
@@ -71,7 +76,7 @@ frontView model card =
                     c.value.name
     in
         div []
-            [ span [] [ text card.value.question ]
+            [ span [] <| renderText card.value.question
             , span [ css [ marginLeft <| px 12, float right, color theme.accent ] ]
                 [ text categoryName ]
             ]

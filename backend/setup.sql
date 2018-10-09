@@ -3,13 +3,13 @@ CREATE SCHEMA public;
 
 CREATE TABLE categories (
     id SERIAL PRIMARY KEY ,
-    name varchar(255)
+    name text
 );
 
 CREATE TABLE cards (
     id SERIAL PRIMARY KEY,
-    question varchar(255),
-    answer varchar(255),
+    question text,
+    answer text,
     last_answered_at timestamptz,
     due_at timestamptz,
     category_id int REFERENCES categories ON DELETE RESTRICT

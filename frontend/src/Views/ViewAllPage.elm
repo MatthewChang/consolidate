@@ -18,7 +18,7 @@ import Ui.Chooser as Chooser
 import Views.Card exposing (..)
 import Time.DateTime exposing (..)
 
-
+ 
 viewAllPage : Model -> Html Msg
 viewAllPage model =
     let
