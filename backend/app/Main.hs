@@ -16,7 +16,7 @@ import Data.ByteString.Lazy.Char8 (pack)
 --import GHC.Generics
 import Network.HTTP.Media ((//), (/:))
 import           Data.Text (Text)
-import Network.Wai
+import Network.Wai()
 import Network.Wai.Handler.Warp hiding (getPort)
 import Servant
 import System.IO
@@ -36,8 +36,9 @@ import System.IO.Error
 import qualified Data.ByteString.Char8 as B
 import Control.Monad.Reader
 import Data.Sort
-
-
+import Servant.Auth.Server
+import Auth
+{-import Debug.Trace-}
 
 data HTML
 instance Accept HTML where
@@ -53,7 +54,7 @@ type NewCardBody = SuperRecord.Record '["question" := Text
                   , "categoryId" := Maybe (Key Category)
                   , "newCategory" := Text]
 
-type API =  "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] [Record Category]
+type Protected =  "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] [Record Category]
       :<|> "cards" :> Get '[JSON] [Record Card]
       :<|> "cards" :> "ready" :> Get '[JSON] ReadyCardResponse
       :<|> "cards" :> Capture "id" (Key Card) :> Get '[JSON] GetCardResponse
@@ -63,8 +64,13 @@ type API =  "cards" :> ReqBody '[JSON] NewCardBody :> Post '[JSON] [Record Categ
       :<|> "cards" :> Capture "id" (Key Card) :> ReqBody '[JSON] NewCardBody :> Put '[JSON] (Record Card)
       :<|> "categories" :> Get '[JSON] [Record Category]
       :<|> "all" :> Get '[JSON] ShowAllResponse
-      :<|> Get '[HTML] String
+
+type API auths = Unprotected :<|> (Auth auths User :> Protected)
+
+type Unprotected = Get '[HTML] String
+      :<|> "login" :> ReqBody '[JSON] Login :> PostNoContent '[JSON] (Headers '[ Header "Set-Cookie" SetCookie , Header "Set-Cookie" SetCookie] NoContent)
       :<|> "static" :> Raw
+
 
 getConnectionString :: IO B.ByteString
 getConnectionString = do
@@ -110,8 +116,17 @@ newOrExistingCategoryId b conn = case get #categoryId b of
   Nothing -> key <$> insertElement (Category $ get #newCategory b) conn
 
 
-server3 :: Pool Connection -> Server API
-server3 pool =
+unprotected
+  :: CookieSettings -> JWTSettings -> Pool Connection -> Server Unprotected
+unprotected cs js pool = home :<|> checkCreds cs js :<|> serveDirectoryWebApp
+  "static/static"
+ where
+  home = liftIO $ do
+    handle <- openFile "static/index.html" ReadMode
+    hGetContents handle
+
+protected :: Pool Connection -> AuthResult User -> Server Protected
+protected pool (Authenticated _) =
   card
     :<|> cards
     :<|> ready
@@ -122,8 +137,6 @@ server3 pool =
     :<|> edit
     :<|> categories
     :<|> showAll
-    :<|> home
-    :<|> serveDirectoryWebApp "static/static"
  where
   edit :: Key Card -> NewCardBody -> Handler (Record Card)
   edit k b = withResource pool $ \conn -> cardEdit k b conn
@@ -181,28 +194,19 @@ server3 pool =
 
   cardDelete :: Key Card -> Handler (Key Card)
   cardDelete = fmap Key . liftIO . withResource pool . deleteElement
-
-  home       = liftIO $ do
-    handle <- openFile "static/index.html" ReadMode
-    hGetContents handle
-
-userAPI :: Proxy API
-userAPI = Proxy
-
---nt :: Pool Connection -> ReaderT Connection IO x -> Handler x
---nt pool (ReaderT r) = liftIO $ withResource pool r
-
---modifiedServer :: Pool Connection -> Server API
---modifiedServer pool = hoistServer userAPI (nt pool) $ server3 pool
--- 'serve' comes from servant and hands you a WAI Application,
--- which you can think of as an "abstract" web application,
--- not yet a webserver.
-app1 :: Pool Connection -> Application
-app1 pool = serve userAPI $ server3 pool
+protected _ _ = throwAll err401
 
 main :: IO ()
 main = do
-  pool <- connectionPool
-  port <- getPort
+  pool  <- connectionPool
+  port  <- getPort
+  myKey <- generateKey
+  let
+    js      = defaultJWTSettings myKey
+    cs      = defaultCookieSettings
+    cfg     = (cs Servant.:. js Servant.:. EmptyContext)
+    userAPI = Proxy :: Proxy (API '[Cookie])
+    app =
+      serveWithContext userAPI cfg $ unprotected cs js pool :<|> protected pool
   putStrLn $ "Listening on " ++ show port
-  run port $ logStdoutDev $ app1 pool
+  run port $ logStdoutDev $ app
