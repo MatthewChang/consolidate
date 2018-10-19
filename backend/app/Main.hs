@@ -202,8 +202,10 @@ main = do
   port  <- getPort
   myKey <- generateKey
   let
-    js      = defaultJWTSettings myKey
-    cs      = defaultCookieSettings
+    js = defaultJWTSettings myKey
+    cs = defaultCookieSettings { cookieIsSecure    = NotSecure
+                               , cookieXsrfSetting = Nothing
+                               }
     cfg     = (cs Servant.:. js Servant.:. EmptyContext)
     userAPI = Proxy :: Proxy (API '[Cookie])
     app =

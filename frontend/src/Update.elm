@@ -13,6 +13,7 @@ import Types.Msg exposing (..)
 import Utility exposing (..)
 import Task
 import Time
+import Http exposing (..)
 
 
 popAlert : Model -> Model
@@ -37,156 +38,194 @@ resetFlippedCards model =
     { model | flippedCards = EveryDict.empty }
 
 
+
+-- Adds a redirect action to a update result
+
+
+redirectTo : Route -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+redirectTo route ( model, cmd ) =
+    ( { model | menuOpen = False }, navigateTo route )
+
+
+handleError : Error -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
+handleError err ( m, c ) =
+    case err of
+        BadStatus r ->
+            if r.status.code == 401 then
+                redirectTo LoginPage ( m, c )
+            else
+                ( m, c )
+
+        _ ->
+            ( m, c )
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
-    case msg of
-        GetTime msg ->
-            ( model, Task.perform (GotTime msg) Time.now )
+    let
+        defaultError =
+            \x -> handleError x ( model, Cmd.none )
+    in
+        case msg of
+            GetTime msg ->
+                ( model, Task.perform (GotTime msg) Time.now )
 
-        GotTime msg time ->
-            update msg { model | currentTime = Just time }
+            GotTime msg time ->
+                update msg { model | currentTime = Just time }
 
-        SubmitNewCard ->
-            ( model, Requests.submitNewCard model )
+            SubmitNewCard ->
+                ( model, Requests.submitNewCard model )
 
-        SaveCard ->
-            let
-                cmd =
-                    case model.editingCard of
-                        Nothing ->
-                            Cmd.none
+            SubmitPassword ->
+                ( model, Requests.submitPassword <| getInputValue PasswordInput model )
 
-                        Just card ->
-                            Requests.saveCard (getNewCardForm model) card.id
-            in
-                ( model, cmd )
+            SaveCard ->
+                let
+                    cmd =
+                        case model.editingCard of
+                            Nothing ->
+                                Cmd.none
 
-        ToggleMenu ->
-            ( { model | menuOpen = not model.menuOpen }, Cmd.none )
+                            Just card ->
+                                Requests.saveCard (getNewCardForm model) card.id
+                in
+                    ( model, cmd )
 
-        PushAlert options ->
-            ( { model | alerts = options :: model.alerts }, Cmd.none )
+            ToggleMenu ->
+                ( { model | menuOpen = not model.menuOpen }, Cmd.none )
 
-        PopAlert ->
-            ( popAlert model, Cmd.none )
+            PushAlert options ->
+                ( { model | alerts = options :: model.alerts }, Cmd.none )
 
-        MarkCardAs bool ->
-            ( model, Requests.markCardAs model bool )
+            PopAlert ->
+                ( popAlert model, Cmd.none )
 
-        FlipCard key ->
-            let
-                val =
-                    getFlipped model key
-            in
-                ( { model | flippedCards = EveryDict.insert key (not val) model.flippedCards }, Cmd.none )
+            MarkCardAs bool ->
+                ( model, Requests.markCardAs model bool )
 
-        DeleteCard key ->
-            ( { model | alerts = List.drop 1 model.alerts }, Requests.deleteCard key )
+            FlipCard key ->
+                let
+                    val =
+                        getFlipped model key
+                in
+                    ( { model | flippedCards = EveryDict.insert key (not val) model.flippedCards }, Cmd.none )
 
-        SetInput inputType value ->
-            ( { model | inputFields = EveryDict.insert inputType value model.inputFields }, Cmd.none )
+            DeleteCard key ->
+                ( { model | alerts = List.drop 1 model.alerts }, Requests.deleteCard key )
 
-        SetChooser field msg ->
-            let
-                ( newModel, cmd ) =
-                    Chooser.update msg <| getChooserModel field model
-            in
-                ( setChooserModel field newModel model, Cmd.none )
+            SetInput inputType value ->
+                ( { model | inputFields = EveryDict.insert inputType value model.inputFields }, Cmd.none )
 
-        ----requests
-        GetCategories (Ok result) ->
-            let
-                setNewDropdown =
-                    setChooserModel SelectedCardCategory <| initNewCardCategoryChooser result
-            in
-                ( setNewDropdown { model | requestFinished = True, categories = result }
+            SetChooser field msg ->
+                let
+                    ( newModel, cmd ) =
+                        Chooser.update msg <| getChooserModel field model
+                in
+                    ( setChooserModel field newModel model, Cmd.none )
+
+            ----requests
+            GetCategories (Ok result) ->
+                let
+                    setNewDropdown =
+                        setChooserModel SelectedCardCategory <| initNewCardCategoryChooser result
+                in
+                    ( setNewDropdown { model | requestFinished = True, categories = result }
+                    , Cmd.none
+                    )
+
+            GetCategories (Err e) ->
+                defaultError e
+
+            SubmitNewCardRequest (Ok categories) ->
+                let
+                    newModel =
+                        List.foldl (setInputValue "") model [ CardQuestion, CardAnswer ]
+
+                    setcm =
+                        setChooserValue SelectedCardCategory ""
+                in
+                    ( setCategories categories <| setcm <| newModel, Cmd.none )
+
+            SubmitNewCardRequest (Err e) ->
+                defaultError e
+
+            FetchAllPage (Ok ( cats, cards )) ->
+                ( resetFlippedCards <|
+                    { model
+                        | requestFinished = True
+                        , categories = cats
+                        , cards = cards
+                    }
                 , Cmd.none
                 )
 
-        GetCategories (Err _) ->
-            ( model, Cmd.none )
+            FetchAllPage (Result.Err e) ->
+                handleError e ( { model | requestFinished = True }, Cmd.none )
 
-        SubmitNewCardRequest (Ok categories) ->
-            let
-                newModel =
-                    List.foldl (setInputValue "") model [ CardQuestion, CardAnswer ]
+            GetReadyCardsResponse (Ok ( card, categories )) ->
+                ( resetFlippedCards <| { model | requestFinished = True, categories = categories, readyCard = card }, Cmd.none )
 
-                setcm =
-                    setChooserValue SelectedCardCategory ""
-            in
-                ( setCategories categories <| setcm <| newModel, Cmd.none )
+            GetReadyCardsResponse (Result.Err e) ->
+                handleError e ( { model | requestFinished = True }, Cmd.none )
 
-        SubmitNewCardRequest (Err _) ->
-            ( model, Cmd.none )
+            MarkCardResponse (Ok ( card, categories )) ->
+                ( resetFlippedCards <| { model | categories = categories, readyCard = card }, Cmd.none )
 
-        FetchAllPage (Ok ( cats, cards )) ->
-            ( resetFlippedCards <|
-                { model
-                    | requestFinished = True
-                    , categories = cats
-                    , cards = cards
-                }
-            , Cmd.none
-            )
+            MarkCardResponse (Result.Err e) ->
+                defaultError e
 
-        FetchAllPage (Result.Err _) ->
-            ( { model | requestFinished = True }, Cmd.none )
+            DeleteCardResponse (Ok result) ->
+                ( popAlert <| { model | cards = List.filter (\x -> x.id /= result) model.cards }, Cmd.none )
 
-        GetReadyCardsResponse (Ok ( card, categories )) ->
-            ( resetFlippedCards <| { model | requestFinished = True, categories = categories, readyCard = card }, Cmd.none )
+            DeleteCardResponse (Result.Err e) ->
+                defaultError e
 
-        GetReadyCardsResponse (Result.Err _) ->
-            ( { model | requestFinished = True }, Cmd.none )
+            GetCardResponse (Ok ( card, categories )) ->
+                let
+                    newFields =
+                        [ ( card.value.question, CardQuestion ), ( card.value.answer, CardAnswer ) ]
 
-        MarkCardResponse (Ok ( card, categories )) ->
-            ( resetFlippedCards <| { model | categories = categories, readyCard = card }, Cmd.none )
+                    newModel =
+                        List.foldl (uncurry setInputValue) model newFields
 
-        MarkCardResponse (Result.Err _) ->
-            ( model, Cmd.none )
+                    setcm =
+                        setChooserValue SelectedCardCategory (toString <| unKey <| card.value.categoryId)
+                in
+                    ( setCategories categories <| setcm <| { newModel | editingCard = Just card, requestFinished = True }, Cmd.none )
 
-        DeleteCardResponse (Ok result) ->
-            ( popAlert <| { model | cards = List.filter (\x -> x.id /= result) model.cards }, Cmd.none )
+            GetCardResponse (Result.Err e) ->
+                defaultError e
 
-        DeleteCardResponse (Result.Err _) ->
-            ( model, Cmd.none )
+            SaveCardResponse (Ok card) ->
+                ( model, Cmd.none )
 
-        GetCardResponse (Ok ( card, categories )) ->
-            let
-                newFields =
-                    [ ( card.value.question, CardQuestion ), ( card.value.answer, CardAnswer ) ]
+            SaveCardResponse (Result.Err e) ->
+                defaultError e
 
-                newModel =
-                    List.foldl (uncurry setInputValue) model newFields
+            LoginResponse (Ok card) ->
+                redirectTo RootPage ( model, Cmd.none )
 
-                setcm =
-                    setChooserValue SelectedCardCategory (toString <| unKey <| card.value.categoryId)
-            in
-                ( setCategories categories <| setcm <| { newModel | editingCard = Just card, requestFinished = True }, Cmd.none )
+            LoginResponse (Err e) ->
+                defaultError e
 
-        GetCardResponse (Result.Err _) ->
-            ( model, Cmd.none )
+            BypassInitialFetch ->
+                ( { model | requestFinished = True }, Cmd.none )
 
-        SaveCardResponse (Ok card) ->
-            ( model, Cmd.none )
+            ------------routing handling
+            NavigateTo route ->
+                redirectTo route ( model, Cmd.none )
 
-        SaveCardResponse (Result.Err _) ->
-            ( model, Cmd.none )
+            InitializeFetch ->
+                case (List.head model.history) of
+                    Nothing ->
+                        ( model, Cmd.none )
 
-        ------------routing handling
-        NavigateTo route ->
-            ( { model | menuOpen = False }, navigateTo route )
+                    Just route ->
+                        ( model, Requests.requestForPageLoad route )
 
-        InitializeFetch ->
-            case (List.head model.history) of
-                Nothing ->
-                    ( model, Cmd.none )
-
-                Just route ->
-                    ( model, Requests.requestForPageLoad route )
-
-        HandleUrlChange location ->
-            let
-                maybeRoute =
-                    Url.parseHash routeParser location
-            in
-                ( { model | history = maybeRoute :: model.history }, Requests.requestForPageLoad maybeRoute )
+            HandleUrlChange location ->
+                let
+                    maybeRoute =
+                        Url.parseHash routeParser location
+                in
+                    ( { model | history = maybeRoute :: model.history }, Requests.requestForPageLoad maybeRoute )

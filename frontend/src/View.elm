@@ -7,6 +7,7 @@ import Views.HomePage exposing (..)
 import Views.AppFrame exposing (..)
 import Views.NewCardPage exposing (..)
 import Views.ViewAllPage exposing (..)
+import Views.LoginPage exposing (loginPage)
 import Types.Msg exposing (..)
 
 
@@ -29,5 +30,8 @@ view model =
 
                 Just (EditPage id) ->
                     newCardPage Edit model
+
+                Just LoginPage ->
+                    loginPage model
         else
             text "Loading..."

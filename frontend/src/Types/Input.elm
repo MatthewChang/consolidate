@@ -9,6 +9,7 @@ type InputField
     = CardQuestion
     | CardAnswer
     | CategoryOtherInput
+    | PasswordInput
 
 
 type ChooserField
@@ -27,6 +28,9 @@ inputLabel a =
 
         CategoryOtherInput ->
             "New Category Name"
+
+        PasswordInput ->
+            "Password"
 
 
 categoryToItem : Record Category -> Chooser.Item

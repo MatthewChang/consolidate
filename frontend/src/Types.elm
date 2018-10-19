@@ -44,6 +44,7 @@ type Route
     | ViewAll
     | NewCard
     | EditPage (Key Card)
+    | LoginPage
 
 
 routeParser : Url.Parser (Route -> a) a
@@ -52,6 +53,7 @@ routeParser =
         [ Url.map RootPage Url.top
         , Url.map ViewAll (Url.s "all")
         , Url.map NewCard (Url.s "new")
+        , Url.map LoginPage (Url.s "login")
         , Url.map (EditPage << Key) (Url.s "edit" </> Url.int)
         ]
 
@@ -65,11 +67,15 @@ routeToString r =
         ViewAll ->
             "all/"
 
+
         NewCard ->
             "new/"
 
         EditPage (Key id) ->
             "edit/" ++ toString id
+
+        LoginPage ->
+            "login/"
 
 
 navigateTo : Route -> Cmd msg

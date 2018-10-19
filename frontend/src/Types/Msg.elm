@@ -19,6 +19,7 @@ type Msg
     = HandleUrlChange Navigation.Location
     | InitializeFetch
     | NavigateTo Route
+    | BypassInitialFetch
     | GetTime Msg
     | GotTime Msg Time
     | ToggleMenu
@@ -31,6 +32,7 @@ type Msg
     | SetInput InputField String
     | SetChooser ChooserField Chooser.Msg
     | MarkCardAs Bool
+    | SubmitPassword
     | GetReadyCardsResponse (Result Http.Error ( Maybe (Record Card), List (Record Category) ))
     | MarkCardResponse (Result Http.Error ( Maybe (Record Card), List (Record Category) ))
     | FetchAllPage (Result Http.Error ShowAllResponse)
@@ -39,6 +41,7 @@ type Msg
     | GetCardResponse (Result Http.Error ( Record Card, List (Record Category) ))
     | DeleteCardResponse (Result Http.Error (Key Card))
     | SaveCardResponse (Result Http.Error (Record Card))
+    | LoginResponse (Result Http.Error ())
 
 
 type alias AlertDialogContents =
