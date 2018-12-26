@@ -5,3 +5,4 @@ static/static/bundle.js
 *.db
 exe
 .tags
+scratchPad.hs

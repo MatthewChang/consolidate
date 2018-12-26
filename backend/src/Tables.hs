@@ -16,6 +16,7 @@ import           Data.Text (Text)
 import Database.PostgreSQL.Simple.Types
 import Lib
 import Data.Time
+import Web.Users.Types
 
 data Card = Card {
     question :: Text,
@@ -53,3 +54,4 @@ instance Table Category where
 
 categoryIdC = Column "id" :: Column Category (Key Card)
 categoryNameC = Column "name" :: Column Category Text
+

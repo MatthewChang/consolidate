@@ -38,6 +38,7 @@ import Control.Monad.Reader
 import Data.Sort
 import Servant.Auth.Server
 import Auth
+import Web.Users.Types
 {-import Debug.Trace-}
 
 data HTML
@@ -118,8 +119,8 @@ newOrExistingCategoryId b conn = case get #categoryId b of
 
 unprotected
   :: CookieSettings -> JWTSettings -> Pool Connection -> Server Unprotected
-unprotected cs js pool = home :<|> checkCreds cs js :<|> serveDirectoryWebApp
-  "static/static"
+unprotected cs js pool =
+  home :<|> checkCreds cs js pool :<|> serveDirectoryWebApp "static/static"
  where
   home = liftIO $ do
     handle <- openFile "static/index.html" ReadMode
@@ -161,8 +162,8 @@ protected pool (Authenticated _) =
     c    <- find404 k conn
     time <- liftIO getCurrentTime
     let inter = if res
-          then 2 * (diffUTCTime time $ lastAnsweredAt $ value c)
-          else (diffUTCTime (dueAt $ value c) (lastAnsweredAt $ value c)) / 2
+          then 1.75 * (diffUTCTime time $ lastAnsweredAt $ value c)
+          else (diffUTCTime (dueAt $ value c) (lastAnsweredAt $ value c)) / 4 
         nextTime    = addUTCTime inter time
         updatedCard = (value c) { lastAnsweredAt = time, dueAt = nextTime }
     _ <- liftIO $ updateElement k updatedCard conn
