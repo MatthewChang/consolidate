@@ -31,6 +31,7 @@ type alias Model =
     , editingCard : Maybe (Record Card)
     , flippedCards : EveryDict.EveryDict (Key Card) Bool
     , alerts : List AlertDialogContents
+    , flashes : List FlashContents
     , currentTime : Maybe Time
     }
 
@@ -56,6 +57,7 @@ initialState location =
       , editingCard = Nothing
       , flippedCards = EveryDict.empty
       , alerts = []
+      , flashes = []
       , currentTime = Nothing
       }
     , performInitialFetch

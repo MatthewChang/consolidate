@@ -24,7 +24,7 @@ pendingCard currentTime time =
             delta time currentTime
 
         values =
-            [ ( diff.days, "days" )
+            [ ( diff.hours // 24, "days" )
             , ( diff.hours % 24, "hours" )
             , ( diff.minutes % 60, "minutes" )
             , ( diff.seconds % 60, "seconds" )

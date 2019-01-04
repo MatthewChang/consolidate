@@ -20,12 +20,14 @@ type Msg
     | InitializeFetch
     | NavigateTo Route
     | BypassInitialFetch
+    | UpdateCurrentTime Time
     | GetTime Msg
     | GotTime Msg Time
     | ToggleMenu
     | FlipCard (Key Card)
     | PushAlert AlertDialogContents
     | PopAlert
+    | PushFlash String
     | DeleteCard (Key Card)
     | SubmitNewCard
     | SaveCard
@@ -46,3 +48,6 @@ type Msg
 
 type alias AlertDialogContents =
     { message : String, onConfirm : Msg }
+
+type alias FlashContents =
+    { message : String, time : Time }

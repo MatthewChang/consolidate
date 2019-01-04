@@ -44,6 +44,7 @@ resetFlippedCards model =
 
 redirectTo : Route -> ( Model, Cmd Msg ) -> ( Model, Cmd Msg )
 redirectTo route ( model, cmd ) =
+    -- losing cmd here
     ( { model | menuOpen = False }, navigateTo route )
 
 
@@ -60,6 +61,37 @@ handleError err ( m, c ) =
             ( m, c )
 
 
+updateFlashes : Model -> Model
+updateFlashes model =
+    let
+        newFlashes =
+            case model.currentTime of
+                Just t ->
+                    List.filter (\x -> x.time >= t) model.flashes
+
+                Nothing ->
+                    model.flashes
+    in
+        { model | flashes = newFlashes }
+
+
+addFlash : String -> Model -> Model
+addFlash message model =
+    case model.currentTime of
+        Nothing ->
+            model
+
+        Just t ->
+            let
+                removeTime =
+                    t + (2 * Time.second)
+
+                contents =
+                    { message = message, time = removeTime }
+            in
+                { model | flashes = contents :: model.flashes }
+
+
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     let
@@ -67,6 +99,9 @@ update msg model =
             \x -> handleError x ( model, Cmd.none )
     in
         case msg of
+            UpdateCurrentTime currentTime ->
+                ( updateFlashes <| { model | currentTime = Just currentTime }, Cmd.none )
+
             GetTime msg ->
                 ( model, Task.perform (GotTime msg) Time.now )
 
@@ -99,6 +134,9 @@ update msg model =
 
             PopAlert ->
                 ( popAlert model, Cmd.none )
+
+            PushFlash message ->
+                ( addFlash message model, Cmd.none )
 
             MarkCardAs bool ->
                 ( model, Requests.markCardAs model bool )
@@ -206,7 +244,7 @@ update msg model =
                 redirectTo RootPage ( model, Cmd.none )
 
             LoginResponse (Err e) ->
-                defaultError e
+                handleError e ( addFlash "Login Failed." model, Cmd.none )
 
             BypassInitialFetch ->
                 ( { model | requestFinished = True }, Cmd.none )

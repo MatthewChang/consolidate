@@ -8,4 +8,4 @@ import Views.Components exposing (..)
 
 loginPage : Model -> Html Msg
 loginPage model =
-    div [] [ textInputWithEnter SubmitPassword PasswordInput model]
+    div [] [ passwordInputWithEnter SubmitPassword PasswordInput model]

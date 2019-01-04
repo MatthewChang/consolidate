@@ -132,7 +132,41 @@ alerts model =
             alert a
 
 
+flashes : Model -> Html Msg
+flashes model =
+    case List.head model.flashes of
+        Nothing ->
+            div [] []
+
+        Just c ->
+            div
+                [ css
+                    [ zIndex (int 2)
+                    , position absolute
+                    , displayFlex
+                    , width (pct 100)
+                    , justifyContent center
+                    ]
+                ]
+                [ div
+                    [ css
+                        [ width <| px 200
+                        , color theme.text
+                        , backgroundColor theme.accent
+                        , border <| px 1
+                        , borderColor theme.text
+                        , borderStyle solid
+                        , borderRadius <| px 11
+                        , padding <| px 6
+                        , marginTop <| px 17
+                        , textAlign center
+                        ]
+                    ]
+                    [ text c.message ]
+                ]
+
+
 appFrame : Model -> Html Msg -> Html Msg
 appFrame model body =
     div [ css [ displayFlex, flexDirection column, height <| vh 100 ] ]
-        [ alerts model, toolbar model, body ]
+        [ flashes model, alerts model, toolbar model, body ]

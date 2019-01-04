@@ -1,4 +1,4 @@
-module Views.Components exposing (textInput, textArea, styledButton,textInputWithEnter)
+module Views.Components exposing (textInput, textArea, styledButton, textInputWithEnter,passwordInputWithEnter)
 
 import Html.Keyed as Keyed
 import Model exposing (..)
@@ -8,7 +8,7 @@ import Bootstrap.Button as Button
 import Css exposing (..)
 import Html exposing (map)
 import Html.Styled exposing (..)
-import Html.Styled.Attributes exposing (value, placeholder, css)
+import Html.Styled.Attributes exposing (value, placeholder, css, type_)
 import Html.Styled.Events exposing (..)
 import Views.Theme exposing (..)
 import Types.Input exposing (..)
@@ -57,9 +57,14 @@ textInput : InputField -> Model -> Html Msg
 textInput =
     textInputBase False []
 
+passwordInputWithEnter : Msg -> InputField -> Model -> Html Msg
+passwordInputWithEnter msg =
+    textInputBase False [type_ "password", onEnter msg]
+
+
 textInputWithEnter : Msg -> InputField -> Model -> Html Msg
 textInputWithEnter msg =
-    textInputBase False [onEnter msg]
+    textInputBase False [ onEnter msg ]
 
 
 textArea : InputField -> Model -> Html Msg
