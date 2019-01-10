@@ -13,7 +13,10 @@ import Ui.Chooser as Chooser
 type alias ShowAllResponse =
     ( List (Record Category), List (Record Card) )
 
+
+
 --type MsgWithTime = GetTime Msg | GotTime Msg DateTime
+
 
 type Msg
     = HandleUrlChange Navigation.Location
@@ -28,6 +31,7 @@ type Msg
     | PushAlert AlertDialogContents
     | PopAlert
     | PushFlash String
+    | PopFlash
     | DeleteCard (Key Card)
     | SubmitNewCard
     | SaveCard
@@ -49,5 +53,6 @@ type Msg
 type alias AlertDialogContents =
     { message : String, onConfirm : Msg }
 
+
 type alias FlashContents =
-    { message : String, time : Time }
+    String

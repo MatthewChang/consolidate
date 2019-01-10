@@ -61,35 +61,23 @@ handleError err ( m, c ) =
             ( m, c )
 
 
-updateFlashes : Model -> Model
-updateFlashes model =
-    let
-        newFlashes =
-            case model.currentTime of
-                Just t ->
-                    List.filter (\x -> x.time >= t) model.flashes
 
-                Nothing ->
-                    model.flashes
-    in
-        { model | flashes = newFlashes }
+--updateFlashes : Model -> Model
+--updateFlashes model =
+--let
+--newFlashes =
+--case model.currentTime of
+--Just t ->
+--List.filter (\x -> x.time >= t) model.flashes
+--Nothing ->
+--model.flashes
+--in
+--{ model | flashes = newFlashes }
 
 
 addFlash : String -> Model -> Model
 addFlash message model =
-    case model.currentTime of
-        Nothing ->
-            model
-
-        Just t ->
-            let
-                removeTime =
-                    t + (2 * Time.second)
-
-                contents =
-                    { message = message, time = removeTime }
-            in
-                { model | flashes = contents :: model.flashes }
+    { model | flashes = message :: model.flashes }
 
 
 update : Msg -> Model -> ( Model, Cmd Msg )
@@ -100,8 +88,9 @@ update msg model =
     in
         case msg of
             UpdateCurrentTime currentTime ->
-                ( updateFlashes <| { model | currentTime = Just currentTime }, Cmd.none )
+                ( model, Cmd.none )
 
+            --( updateFlashes <| { model | currentTime = Just currentTime }, Cmd.none )
             GetTime msg ->
                 ( model, Task.perform (GotTime msg) Time.now )
 
@@ -137,6 +126,9 @@ update msg model =
 
             PushFlash message ->
                 ( addFlash message model, Cmd.none )
+
+            PopFlash ->
+                ( { model | flashes = List.take (List.length model.flashes - 1) model.flashes }, Cmd.none )
 
             MarkCardAs bool ->
                 ( model, Requests.markCardAs model bool )

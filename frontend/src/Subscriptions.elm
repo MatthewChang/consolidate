@@ -9,10 +9,18 @@ import Time
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-    Sub.batch
-        [ Time.every Time.second UpdateCurrentTime]
+    let
+        flashSubs =
+            if List.length model.flashes > 0 then
+                [ Time.every Time.second (\x -> PopFlash) ]
+            else
+                []
+    in
+        Sub.batch <| flashSubs
+
+
 
 --subscriptions : Model -> Sub Msg
 --subscriptions model =
-    --Sub.batch
-        --[ Dropdown.subscriptions model.showAddTagDropdown SetAddTagDropdownState ]
+--Sub.batch
+--[ Dropdown.subscriptions model.showAddTagDropdown SetAddTagDropdownState ]

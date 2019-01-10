@@ -162,7 +162,7 @@ flashes model =
                         , textAlign center
                         ]
                     ]
-                    [ text c.message ]
+                    [ text c ]
                 ]
 
 
